@@ -7,6 +7,7 @@
 #include <Simple_MPU6050.h> //https://github.com/ZHomeSlice/Simple_MPU6050
 #include <Simple_Wire.h>    //https://github.com/ZHomeSlice/Simple_Wire
 #include <Wire.h>
+
 /*=======================================
            Variables Motor
   ========================================*/
@@ -25,7 +26,6 @@ volatile int CountEncoderA = 0, CountEncoderB = 0;
 volatile int DistanceEncoder = 0;
 unsigned long FormerTime = 0;
 float Rpm = 0.0;
-
 
 /*=======================================
      Acelerometro y Giroscopio MPU6050
@@ -122,6 +122,9 @@ void setup() {
     Turning = true;
     CurrentYaw = 0.0;
   }
+    /*=======================================
+           Movimiento Angular Motor
+    ========================================*/
   if (Turning) {
     mpu.dmp_read_fifo();
     float gyroZ = mpu.gyro[2] / 131.0;
