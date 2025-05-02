@@ -42,23 +42,30 @@ int Perimeter;
 //float DistancePoint = 50; // Distancia a recorrer
 //float TargetAngle = 90;   // Angulo para girar
 
-
+/*=======================================
+       Comfigutacion de los Motores
+  ========================================*/
 void ConfigMotor(int Motor[], int Pwm[], int Stby) {
   for (byte i = 0; i < 4; i++) pinMode(Motor[i], OUTPUT);
   for (byte i = 0; i < 2; i++) pinMode(Pwm[i], OUTPUT);
   pinMode(Stby, OUTPUT);
   digitalWrite(Stby, HIGH);
 
-} void Encoder(int PinAB[], int EncoderFullTurn, int Diameter) {
+}
+/*=======================================
+       Comfigutacion de los Encoder's
+  ========================================*/
+void Encoder(int PinAB[], int EncoderFullTurn, int Diameter) {
   const int Perimeter = PI * Diameter; //El 20.0 hace referencia a el diametro de la rueda
   for (byte i = 0; i < 2; i++) pinMode(PinAB[i], INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PinAB[0]), UpdateEncoderA, RISING);
   attachInterrupt(digitalPinToInterrupt(PinAB[1]), UpdateEncoderB, RISING);
 
-} void RmpDistance() {
-  /*=======================================
-           Calculo RMP & Distancia
-    ========================================*/
+}
+/*=======================================
+         Calculo RMP & Distancia
+  ========================================*/
+void RmpDistance() {
   unsigned long CurrentTime = millis();
   if (CurrentTime - FormerTime >= 1000) {
     noInterrupts();
@@ -73,7 +80,11 @@ void ConfigMotor(int Motor[], int Pwm[], int Stby) {
     FormerTime = CurrentTime;
 
   }
-} void LinealMotor(int DistancePoint, int BaseSpeed) {
+}
+/*=======================================
+       Movimiento Lineal del Motor
+  ========================================*/
+void LinealMotor(int DistancePoint, int BaseSpeed) {
   if (Distance <= DistancePoint && !Turning) {
     digitalWrite(Motor[0], HIGH);
     digitalWrite(Motor[1], LOW);
@@ -101,10 +112,11 @@ void ConfigMotor(int Motor[], int Pwm[], int Stby) {
     Turning = true;
     CurrentYaw = 0.0;
   }
-} void AngularMotor(float TargetAngle, int BaseSpeed) {
-  /*=======================================
-       Movimiento Angular Motor
-    ========================================*/
+}
+/*=======================================
+     Movimiento Angular Motor
+  ========================================*/
+void AngularMotor(float TargetAngle, int BaseSpeed) {
   if (Turning) {
     mpu.dmp_read_fifo();
     float gyroZ = mpu.gyro[2] / 131.0;
@@ -133,7 +145,11 @@ void ConfigMotor(int Motor[], int Pwm[], int Stby) {
       //Serial.println("¡Giro completado!");
     }
   }
-} void UpdateEncoderA() {
+}
+/*=======================================
+              Conteo Encoder
+  ========================================*/
+void UpdateEncoderA() {
   CountEncoderA++;
   DistanceEncoder++;
 }
