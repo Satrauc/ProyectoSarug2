@@ -25,3 +25,25 @@ void loop() {
   delay(200);
 }
 /**/
+/******************************************************************************/
+//Ejemplo Comunicación
+/******************************************************************************/
+/**
+#include "BluetoothSerial.h"
+
+BluetoothSerial SerialBT;
+
+// Arreglos para almacenar los valores
+float Grobal[3];   // GEX, GEY, GEA
+float Local[3];    // LEX, LEY, LEA
+float PuntoB[2];   // BX, BY
+float PuntoC[2];   // CX, CY
+
+void setup() {
+  configurarBluetooth();
+}
+
+void loop() {
+  recibirYResponder();
+}
+/**/
