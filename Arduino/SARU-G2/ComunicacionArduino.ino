@@ -49,13 +49,4 @@ void parsearDatos(String cadena) {
       }
     }
   }
-
-void loop() {
-  if (SerialBT.available()) {
-    String recibido = SerialBT.readStringUntil('\n');
-    Serial.print("Mensaje recibido desde MATLAB: ");
-    Serial.println(recibido);
-
-    SerialBT.println("Mensaje recibido: " + recibido);
-  }
 }
