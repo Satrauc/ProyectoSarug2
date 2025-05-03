@@ -8,29 +8,48 @@ float Local[3];   // LEX, LEY, LEA
 float PuntoB[2];  // BX, BY
 float PuntoC[2];  // CX, CY
 
-void config(){
-   SerialBT.begin("ESP32_Chat");
-   Serial.println("Bluetooth iniciado. Esperando conexión...");
+// ---------------------------------------------
+// Función: Configura el Bluetooth del ESP32
+// ---------------------------------------------
+void configurarBluetooth() {
+  Serial.begin(115200);
+  delay(500); // Tiempo para estabilizar
+  SerialBT.begin("ESP32_Chat"); // Nombre visible del Bluetooth
+  Serial.println("Bluetooth iniciado. Esperando conexión...");
 }
 
+// ---------------------------------------------
+// Función: Recibe la cadena y responde
+// ---------------------------------------------
+void recibirYResponder() {
+  if (SerialBT.available()) {
+    String recibido = SerialBT.readStringUntil('\n');
+    Serial.println("Cadena recibida:");
+    Serial.println(recibido);
+
+    parsearDatos(recibido);
+
+    // Mostrar los datos parseados por consola
+    imprimirDatos();
+
+    SerialBT.println("Datos recibidos y parseados correctamente.");
+  }
+}
+
+// ---------------------------------------------
+// Función: Parsea la cadena de texto en arreglos
+// ---------------------------------------------
 void parsearDatos(String cadena) {
-  // Divide por secciones: ";"
-  int i = 0;
   while (cadena.length() > 0) {
     int index = cadena.indexOf(';');
     String segmento = (index != -1) ? cadena.substring(0, index) : cadena;
-    if (index != -1) cadena = cadena.substring(index + 1);
-    else cadena = "";
+    cadena = (index != -1) ? cadena.substring(index + 1) : "";
 
-    // Divide por campos: "|"
-    int j = 0;
     while (segmento.length() > 0) {
       int sep = segmento.indexOf('|');
       String campo = (sep != -1) ? segmento.substring(0, sep) : segmento;
-      if (sep != -1) segmento = segmento.substring(sep + 1);
-      else segmento = "";
+      segmento = (sep != -1) ? segmento.substring(sep + 1) : "";
 
-      // Divide por clave:valor
       int dosPuntos = campo.indexOf(':');
       if (dosPuntos != -1) {
         String clave = campo.substring(0, dosPuntos);
@@ -49,4 +68,20 @@ void parsearDatos(String cadena) {
       }
     }
   }
+}
+// ---------------------------------------------
+// Función: Imprime los valores parseados
+// ---------------------------------------------
+void imprimirDatos() {
+  Serial.println("Grobal:");
+  Serial.println(Grobal[0]); Serial.println(Grobal[1]); Serial.println(Grobal[2]);
+
+  Serial.println("Local:");
+  Serial.println(Local[0]); Serial.println(Local[1]); Serial.println(Local[2]);
+
+  Serial.println("Punto B:");
+  Serial.println(PuntoB[0]); Serial.println(PuntoB[1]);
+
+  Serial.println("Punto C:");
+  Serial.println(PuntoC[0]); Serial.println(PuntoC[1]);
 }
