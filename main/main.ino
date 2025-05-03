@@ -1,7 +1,9 @@
+#include <math.h>
+
 int MotorPins[] = {1, 2, 3, 4};
 int Pwm[] = {2, 3};
 int EncoderPins[] = {5, 6};
-
+int PosicionInicial = 0.0;
 void setup() {
   
   ConfigMotor(MotorPins, Pwm, 6); //(Motores, Pwm, Stby)
@@ -32,7 +34,21 @@ void loop() {
   //  LinealMotor (TargetDistance, BaseSpeed)
   //  AngularMotor (TargetAngle, BaseSpeed)
   //  BaseSpeed permite avanzar o girar a la velocidad que deseemos.
-  LinealMotor(40, 255);
-  AngularMotor(90, 255);
 
+  float MatrizLineal[] = {3.5, 4.0, 20.0, }
+  //float MatrizAngular[] = {90, 40, 50,}
+
+  for (byte i = 0; i <= Matriz; i++){
+      DatosLineal = MatrizLineal[i];
+      LinealMotor(DatosLineal, 255);
+
+      Angulo = atan((float)()/(MatrizLineal[i]))
+      PosicionInicial = 
+      //datosAngulo  = MatrizAngular[j];
+        AngularMotor(datosAngulo, 255);
+      }
+  }
+  // | 0  0  0
+  // | 0  0  0
+  // | 0  0  0
 }
