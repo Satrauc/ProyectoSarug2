@@ -38,16 +38,14 @@ void transformarPunto(float puntoIn[3]) {
   //return puntoOut[3];
 }
 void PrintMatriz(float MatrizInit[]) {
-  Serial.begin(9600);
-  transformarPunto(MatrizInit);
-  //Serial.println("Punto A transformado:");
+  Serial.begin(9600);  
+
+  transformarPunto(MatrizInit);  
+
+  Serial.println("Punto Transformado:");
   for (int i = 0; i < 3; i++) {
-    Serial.println(puntoOut[i]);
-  }
-  Serial.println("\nPunto Recuperado:");
-  for (int i = 0; i < 3; i++) {
-    float puntoRecuperado[i];
-    Serial.println(puntoRecuperado[i]);
+    Serial.println(puntoOut[i]);  
   }
 }
+
 
