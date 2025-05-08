@@ -1,6 +1,17 @@
-#include "BluetoothSerial.h"
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
 
-BluetoothSerial SerialBT;
+// UUIDs personalizados
+#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
+#define CHARACTERISTIC_TX   "abcd1234-ab12-cd34-ef56-abcdef123456"  // ESP32 → MATLAB
+#define CHARACTERISTIC_RX   "dcba4321-ba21-dc43-fe65-fedcba654321"  // MATLAB → ESP32
+
+BLECharacteristic* pTxCharacteristic;
+BLECharacteristic* pRxCharacteristic;
+bool deviceConnected = false;
+String rxValue = "";
 
 // Arreglos para almacenar valores
 float Grobal[3];  // GEX, GEY, GEA
@@ -9,35 +20,80 @@ float PuntoB[2];  // BX, BY
 float PuntoC[2];  // CX, CY
 
 // ---------------------------------------------
-// Función: Configura el Bluetooth del ESP32
+// Funciónes: Para la configuracion del Bluetooth en ESP32
+/*
+  | Clase               |                                                     |
+  | ------------------- | ---------------------------------------------------------------- |
+  | `MyServerCallbacks` | Detecta conexiones y desconexiones BLE.                          |
+  | `MyRxCallbacks`     | Reacciona cuando el cliente escribe datos en una característica. |
+
+*/
 // ---------------------------------------------
-void configurarBluetooth() {
-  Serial.begin(115200);
-  delay(500); // Tiempo para estabilizar
-  SerialBT.begin("ESP32_Chat"); // Nombre visible del Bluetooth
-  Serial.println("Bluetooth iniciado. Esperando conexión...");
+
+// Clase para eventos de conexión BLE
+class MyServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) override {
+    deviceConnected = true;
+  }
+  void onDisconnect(BLEServer* pServer) override {
+    deviceConnected = false;
+    BLEDevice::startAdvertising();
+  }
+};
+
+// Clase para recepción de datos desde MATLAB
+class MyRxCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic* pCharacteristic) override {
+    rxValue = pCharacteristic->getValue();
+  }
+};
+
+// ---------------------------------------------
+// Función: Configura inicial el Bluetooth del ESP32
+// ---------------------------------------------
+void setupBLE() {
+  BLEDevice::init("ESP32_BLE");
+
+  BLEServer* pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  BLEService* pService = pServer->createService(SERVICE_UUID);
+
+  // Característica para enviar datos (notify)
+  pTxCharacteristic = pService->createCharacteristic(
+    CHARACTERISTIC_TX,
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+  pTxCharacteristic->addDescriptor(new BLE2902());
+
+  // Característica para recibir datos (write)
+  pRxCharacteristic = pService->createCharacteristic(
+    CHARACTERISTIC_RX,
+    BLECharacteristic::PROPERTY_WRITE
+  );
+  pRxCharacteristic->setCallbacks(new MyRxCallbacks());
+
+  pService->start();
+  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->start();
+
+  Serial.println("BLE iniciado");
 }
 
-// ---------------------------------------------
-// Función: Recibe la cadena y responde
-// ---------------------------------------------
-void recibirYResponder() {
-  if (SerialBT.available()) {
-    String recibido = SerialBT.readStringUntil('\n');
-    Serial.println("Cadena recibida:");
-    Serial.println(recibido);
-
-    parsearDatos(recibido);
-
-    // Mostrar los datos parseados por consola
-    imprimirDatos();
-
-    SerialBT.println("Datos recibidos y parseados correctamente.");
+void sendDataBLE(const String& msg) {
+  if (deviceConnected) {
+    pTxCharacteristic->setValue(msg.c_str());
+    pTxCharacteristic->notify();
   }
+}
+
+String readDataBLE() {
+  return String(rxValue.c_str());
 }
 
 // ---------------------------------------------
 // Función: Parsea la cadena de texto en arreglos
+// Ejemplo de trama "GEX:10.5|GEY:20.2|GEA:30.3;LEX:5.0|LEY:15.0|LEA:25.0;BX:100.0|BY:200.0;CX:300.0|CY:400.0;";
 // ---------------------------------------------
 void parsearDatos(String cadena) {
   while (cadena.length() > 0) {
@@ -69,6 +125,7 @@ void parsearDatos(String cadena) {
     }
   }
 }
+
 // ---------------------------------------------
 // Función: Imprime los valores parseados
 // ---------------------------------------------

@@ -1,4 +1,8 @@
-// COnfiguración del pin
+const int sensores[] = {0, 1, 2};  // Usa de 1 a 4 sensores
+const int cantidadSensores = 3;
+const int umbral = 500;
+
+// Configuración del pin
 void ConfigQRE1114(int QRE_PIN){
   pinMode(QRE_PIN, INPUT);
 
