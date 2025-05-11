@@ -1,10 +1,3 @@
-#include "FastIMU.h"
-#include <Wire.h>
-#include <vector>
-
-#define IMU_ADDRESS 0x68
-MPU6500 IMU;
-
 calData calib = { 0 };
 AccelData accelData;
 GyroData gyroData;

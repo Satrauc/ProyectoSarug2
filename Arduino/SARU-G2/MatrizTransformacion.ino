@@ -1,5 +1,3 @@
-#include <math.h>
-
 float T[3][3];
 float puntoOut[3];
 float MatrizInit[3]; //Tx, Ty, Alpha 
