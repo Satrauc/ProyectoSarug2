@@ -56,7 +56,7 @@ void setup() {
     ConfigEncoder(0,0.0);
     configurarMPU6500();
     encenderRojo(); 
-    actualizarVariablesDesdeBLE();
+    
     // Proceso leds
     // 1- Inicia con led rojo en espera de los datos de matlab
     // 2- Parpadea en verde esperando planta
@@ -101,7 +101,7 @@ void loop() {
       // 3.2. Envio de datos a matlab
       //************************************
       sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(VelocidadActual, 3)+"|R"+String(Rpms, 3));
-
+      actualizarVariablesDesdeBLE();
 
       switch (Estado) {
         case 0:
