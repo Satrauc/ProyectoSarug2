@@ -1,11 +1,3 @@
-// Posición del sistema LOCAL respecto al GLOBAL
-float LEX, LEY, LEA;     // Traslación y ángulo del sistema LOCAL al GLOBAL
-
-// Datos de entrada desde comunicación BLE
-float GEX, GEY, GEA;     // Posición y orientación global del punto A (para cálculos de giros)
-float BX, BY;            // Punto B en sistema LOCAL
-float CX, CY;            // Punto C en sistema LOCAL
-
 // Resultados
 float BxGlobal, ByGlobal;
 float CxGlobal, CyGlobal;
@@ -68,14 +60,27 @@ void calcularTrayectoria() {
   Serial.print("Giro ang2 (de B a C): "); Serial.println(ang2);*/
 }
 
-void volverA_A() {
-  float ang3 = angAB - angBC;
-  if (ang3 < 0) ang3 += 360;
-  float ang4 = GEA - angAB;
-  if (ang4 < 0) ang4 += 360;
+float normalizar(float ang) {
+  while (ang < 0) ang += 360;
+  while (ang >= 360) ang -= 360;
+  return ang;
+}
 
-  float ang5 = GEA - angBA;
-  if (ang5 < 0) ang5 += 360;
+void volverA_A() {
+// Paso 1: De C a B
+  float dxCB = BxGlobal - CxGlobal;
+  float dyCB = ByGlobal - CyGlobal;
+  float angCB = calcularAngulo(dxCB, dyCB);  // dirección de C → B
+  float ang3 = normalizar(angCB - angBC);    // rotación necesaria desde C hacia B
+
+  // Paso 2: De B a A
+  float dxBA = GEX - BxGlobal;
+  float dyBA = GEY - ByGlobal;
+  float angBA = calcularAngulo(dxBA, dyBA);  // dirección de B → A
+  float ang4 = normalizar(angBA - angCB);    // rotación desde B hacia A
+
+  // Paso 3: Ajuste final en A para regresar a la orientación inicial
+  float ang5 = normalizar(GEA - angBA);      // rotación para igualar ángulo inicial en A
 
   /*
   Serial.println("RETORNO: De C a B...");
