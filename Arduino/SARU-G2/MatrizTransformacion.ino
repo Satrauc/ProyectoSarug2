@@ -1,13 +1,5 @@
 #include <math.h>
 
-// Posición del sistema LOCAL respecto al GLOBAL
-float LEX, LEY, LEA;     // Traslación y ángulo del sistema LOCAL al GLOBAL
-
-// Datos de entrada desde comunicación BLE
-float GEX, GEY, GEA;     // Posición y orientación global del punto A
-float BX, BY;            // Punto B en sistema LOCAL
-float CX, CY;            // Punto C en sistema LOCAL
-
 // Resultados
 float BxGlobal, ByGlobal;
 float CxGlobal, CyGlobal;
@@ -103,12 +95,12 @@ void imprimirGiro(float ang) {
 void irA_C() {
   Serial.println("MOVIMIENTO: Ir de A a B...");
   imprimirGiro(ang1);
-  Serial.print("Avanzar "); Serial.print(distAB); Serial.println(" unidades");
+  Serial.print("Avanzar "); Serial.print(distAB); Serial.println(" centimetros");
 
   Serial.println("MOVIMIENTO: Ir de B a C...");
   imprimirGiro(ang2);
-  Serial.print("Avanzar "); Serial.print(distBC); Serial.println(" unidades");
-}
+  Serial.print("Avanzar "); Serial.print(distBC); Serial.println(" centimetros");
+} //ESTA FUNCION ES SOLO PARA IMPRIMIR LAS DISTANCIAS Y GIROS QUE DEBERIA AVANZAR
 
 // Función principal para volver al punto A
 void volverA_A() {
@@ -140,24 +132,48 @@ void volverA_A() {
   imprimirGiro(ang5);
 }
 
-// PRUEBA COMPLETA
-void setup() {
+/*void actualizarVariablesDesdeBLE() {
+  GEX = Grobal[0];
+  GEY = Grobal[1];
+  GEA = Grobal[2];
+
+  LEX = Local[0];
+  LEY = Local[1];
+  LEA = Local[2];
+
+  BX = PuntoB[0];
+  BY = PuntoB[1];
+
+  CX = PuntoC[0];
+  CY = PuntoC[1];
+}
+*/ /// IMPORTANTE:
+// La función actualizarVariablesDesdeBLE() NO debe estar aquí.
+// Debe estar en el módulo de comunicaciones, donde se reciben los datos BLE.
+// Solo se llama desde allá después de parsear los datos en el main.
+
+// PRUEBA 
+/*void setup() {
   Serial.begin(9600);
+setupBLE();  // Inicia el BLE
 
-  // Punto A (global)
-  GEX = 0.0; GEY = 0.0; GEA = 0.0;
+  // Espera hasta recibir datos por primera vez
+  while (!deviceConnected || rxValue.length() == 0) {
+    delay(100);
+  }
 
-  // Definición del sistema LOCAL respecto al global
-  LEX = 0.0; LEY = 0.0; LEA = 0.0;
-
-  // Puntos B y C (en sistema local)
-  BX = 100.0; BY = 0.0;
-  CX = 200.0; CY = 100.0;
-
+  // Procesar solo una vez
+  parsearDatos(rxValue);
+  actualizarVariablesDesdeBLE();  // <--- Esta función copia los datos a LEX, LEY, etc.
+ 
+  rxValue = "";
+ 
   calcularTrayectoria();  // A → B → C
   irA_C();                // Movimiento hacia adelante
   volverA_A();            // Regreso al punto inicial
-}
+
+  
+}*/  // ESTO ES UN EJEMPLO DE LO QUE DE BERIA IR EN EL SETUP PARA INICIALIZAR LAS VARIABLES POR MEDIO DE BLE Y QEU FUNCIONEN LAS FUNCIONES DE LAS MATRICES 
 
 void loop() {
   // Nada
