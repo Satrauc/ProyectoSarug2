@@ -11,9 +11,24 @@ float ang1, ang2; // Ángulos relativos para girar
 // Transforma punto local a global con la ecuación directa
 void transformarPunto(float x, float y, float alphaDeg, float tx, float ty, float &xOut, float &yOut) {
   float alphaRad = alphaDeg * (PI / 180.0);
-  xOut = x * cos(alphaRad) - y * sin(alphaRad) + tx;
-  yOut = x * sin(alphaRad) + y * cos(alphaRad) + ty;
-}
+
+  // Matriz de transformación homogénea 3x3
+  float T[3][3] = {
+    {cos(alphaRad), -sin(alphaRad), tx},
+    {sin(alphaRad),  cos(alphaRad), ty},
+    {0,              0,             1}
+  };
+
+  // Vector columna del punto local en coordenadas homogéneas
+  float puntoLocal[3] = {x, y, 1};
+
+  // Resultado de la multiplicación T * puntoLocal
+  float resultado[3] = {0, 0, 0};
+  for (int i = 0; i < 3; i++) {
+    for (int k = 0; k < 3; k++) {
+      resultado[i] += T[i][k] * puntoLocal[k];
+    }
+  }
 
 // Calcula ángulo entre dos puntos
 float calcularAngulo(float dx, float dy) {
