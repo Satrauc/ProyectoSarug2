@@ -100,7 +100,7 @@ void loop() {
       //************************************
       // 3.2. Envio de datos a matlab
       //************************************
-      sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(VelocidadActual, 3)+"|R"+String(Rpms, 3));
+      sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(AnguloActual, 3)+"|R:"+String(Rpms, 3));
       actualizarVariablesDesdeBLE();
 
       switch (Estado) {
