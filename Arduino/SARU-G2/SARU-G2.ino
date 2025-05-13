@@ -56,6 +56,7 @@ void setup() {
     ConfigEncoder(0,0.0);
     configurarMPU6500();
     encenderRojo(); 
+    actualizarVariablesDesdeBLE();
     // Proceso leds
     // 1- Inicia con led rojo en espera de los datos de matlab
     // 2- Parpadea en verde esperando planta
