@@ -4,7 +4,7 @@
 float LEX, LEY, LEA;     // Traslación y ángulo del sistema LOCAL al GLOBAL
 
 // Datos de entrada desde comunicación BLE
-float GEX, GEY, GEA;     // Posición y orientación global del punto A (para cálculos de giros)
+float GEX, GEY, GEA;     // Posición y orientación global del punto A
 float BX, BY;            // Punto B en sistema LOCAL
 float CX, CY;            // Punto C en sistema LOCAL
 
@@ -34,7 +34,7 @@ float calcularAngulo(float dx, float dy) {
 
 // Paso 1 a 5: Preparar datos y calcular vectores/distancias/ángulos
 void calcularTrayectoria() {
-  // 1. Transformar puntos locales B y C a coordenadas globales usando LEX, LEY, LEA
+  // 1. Transformar puntos locales B y C a coordenadas globales
   transformarPunto(BX, BY, LEA, LEX, LEY, BxGlobal, ByGlobal);
   transformarPunto(CX, CY, LEA, LEX, LEY, CxGlobal, CyGlobal);
 
@@ -50,7 +50,7 @@ void calcularTrayectoria() {
   distBC = sqrt(dxBC * dxBC + dyBC * dyBC);
   angBC = calcularAngulo(dxBC, dyBC);
 
-  // 4. Calcular giros (ángulos relativos)
+  // 4. Calcular giros relativos
   ang1 = angAB - GEA;
   if (ang1 < 0) ang1 += 360;
 
@@ -69,54 +69,97 @@ void calcularTrayectoria() {
   Serial.print("Giro ang2 (de B a C): "); Serial.println(ang2);
 }
 
-/* Paso 6: Mover robot A → B → C
+// Definición de epsilon para comparaciones de ángulos
+const float EPSILON = 1e-2;
+
+// Función para normalizar ángulos entre 0 y 360
+float normalizar(float ang) {
+  while (ang < 0) ang += 360;
+  while (ang >= 360) ang -= 360;
+  return ang;
+}
+
+// Función para imprimir giro con dirección mínima e indicando izquierda o derecha
+void imprimirGiro(float ang) {
+  ang = normalizar(ang);
+  
+  // Aplicar epsilon: si el ángulo es muy pequeño, no girar
+  if (abs(ang) < EPSILON || abs(ang - 360) < EPSILON) {
+    Serial.println("No es necesario girar.");
+  }
+  else if (ang <= 180) {
+    Serial.print("Girar a la IZQUIERDA: ");
+    Serial.print(ang);
+    Serial.println(" grados");
+  } else {
+    Serial.print("Girar a la DERECHA: ");
+    Serial.print(360 - ang);
+    Serial.println(" grados");
+  }
+}
+
+
+// Función para ir desde A hasta C (ida)
 void irA_C() {
   Serial.println("MOVIMIENTO: Ir de A a B...");
-  Serial.print("Girar "); Serial.print(ang1); Serial.println(" grados");
+  imprimirGiro(ang1);
   Serial.print("Avanzar "); Serial.print(distAB); Serial.println(" unidades");
 
   Serial.println("MOVIMIENTO: Ir de B a C...");
-  Serial.print("Girar "); Serial.print(ang2); Serial.println(" grados");
+  imprimirGiro(ang2);
   Serial.print("Avanzar "); Serial.print(distBC); Serial.println(" unidades");
-} */
+}
 
-// Paso 7: Mover robot de regreso C → B → A
+// Función principal para volver al punto A
 void volverA_A() {
-  float ang3 = angAB - angBC;
-  if (ang3 < 0) ang3 += 360;
-  float ang4 = GEA - angAB;
-  if (ang4 < 0) ang4 += 360;
+  // Paso 1: De C a B
+  float dxCB = BxGlobal - CxGlobal;
+  float dyCB = ByGlobal - CyGlobal;
+  float angCB = calcularAngulo(dxCB, dyCB);  // dirección de C → B
+  float ang3 = normalizar(angCB - angBC);    // rotación necesaria desde C hacia B
 
-/*
+  // Paso 2: De B a A
+  float dxBA = GEX - BxGlobal;
+  float dyBA = GEY - ByGlobal;
+  float angBA = calcularAngulo(dxBA, dyBA);  // dirección de B → A
+  float ang4 = normalizar(angBA - angCB);    // rotación desde B hacia A
+
+  // Paso 3: Ajuste final en A para regresar a la orientación inicial
+  float ang5 = normalizar(GEA - angBA);      // rotación para igualar ángulo inicial en A
+
+  // OUTPUT
   Serial.println("RETORNO: De C a B...");
-  Serial.print("Girar "); Serial.print(ang3); Serial.println(" grados");
+  imprimirGiro(ang3);
   Serial.print("Avanzar "); Serial.print(distBC); Serial.println(" unidades");
 
   Serial.println("RETORNO: De B a A...");
-  Serial.print("Girar "); Serial.print(ang4); Serial.println(" grados");
+  imprimirGiro(ang4);
   Serial.print("Avanzar "); Serial.print(distAB); Serial.println(" unidades");
-} */
 
-/* PARA HACER PRUEBAS Y SIMULAR
+  Serial.println("RETORNO: En A...");
+  imprimirGiro(ang5);
+}
+
+// PRUEBA COMPLETA
 void setup() {
   Serial.begin(9600);
 
-  // Posición global del punto A
+  // Punto A (global)
   GEX = 0.0; GEY = 0.0; GEA = 0.0;
 
   // Definición del sistema LOCAL respecto al global
-  LEX = 0.0; LEY = 0.0; LEA = 0.0; // <-- Cámbialos según la orientación y posición del sistema local
+  LEX = 0.0; LEY = 0.0; LEA = 0.0;
 
-  // Puntos B y C en coordenadas locales
+  // Puntos B y C (en sistema local)
   BX = 100.0; BY = 0.0;
   CX = 200.0; CY = 100.0;
 
-  calcularTrayectoria();
-  irA_C();
-  volverA_A();  //ESTAS SON LAS FUNCIONES QUE SE DEBEN LLAMAR PARA CALCULAR Y VER LOS PUNTOS, para calcular los puntos y devolvere solo es necesario la primera y la ultima funcion
+  calcularTrayectoria();  // A → B → C
+  irA_C();                // Movimiento hacia adelante
+  volverA_A();            // Regreso al punto inicial
 }
 
 void loop() {
-  
-}*/
+  // Nada
+}
 
