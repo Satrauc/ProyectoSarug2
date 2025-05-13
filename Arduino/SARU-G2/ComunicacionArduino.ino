@@ -9,6 +9,21 @@ float Local[3];   // LEX, LEY, LEA
 float PuntoB[2];  // BX, BY
 float PuntoC[2];  // CX, CY
 
+void actualizarVariablesDesdeBLE() {
+  GEX = Grobal[0];
+  GEY = Grobal[1];
+  GEA = Grobal[2];
+
+  LEX = Local[0];
+  LEY = Local[1];
+  LEA = Local[2];
+
+  BX = PuntoB[0];
+  BY = PuntoB[1];
+
+  CX = PuntoC[0];
+  CY = PuntoC[1];
+}
 // ---------------------------------------------
 // Funciónes: Para la configuracion del Bluetooth en ESP32
 /*
