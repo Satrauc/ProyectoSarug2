@@ -85,7 +85,8 @@ String readDataBLE() {
 // Función: Parsea la cadena de texto en arreglos
 // Ejemplo de trama "GEX:10.5|GEY:20.2|GEA:30.3;LEX:5.0|LEY:15.0|LEA:25.0;BX:100.0|BY:200.0;CX:300.0|CY:400.0;";
 // ---------------------------------------------
-void parsearDatos(String cadena) {
+bool parsearDatos(String cadena) {
+  bool respuesta = false;
   while (cadena.length() > 0) {
     int index = cadena.indexOf(';');
     String segmento = (index != -1) ? cadena.substring(0, index) : cadena;
@@ -111,6 +112,7 @@ void parsearDatos(String cadena) {
         else if (clave == "BY")  PuntoB[1] = valor;
         else if (clave == "CX")  PuntoC[0] = valor;
         else if (clave == "CY")  PuntoC[1] = valor;
+        respuesta = true;
       }
     }
   }

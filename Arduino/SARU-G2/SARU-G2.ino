@@ -21,20 +21,177 @@
 #include <math.h>
 
 // LEDS
-
   #define RedLed 18
   #define GreenLed 19
 
+// DETECION PLANTA
+  #define QRE_PIN 36 
+  std::vector<float> obtenerPosicionXY();
 
+/***************************************************************/
+// Variables Main SARU
+/***************************************************************/
+bool Enable = false;        // Verifica el estado del robot Saru-G2
+std::vector<float> PocisionActual = {0.0, 0.0};
+float AnguloActual = 90.0;
+float VelocidadActual = 0.0;
+float Rpms = 0.0;
+float distanciaAB, anguloAB;
+float distanciaBC, anguloBC;
+unsigned char Estado = 0;    // En Punto A = 0
+                             // Hacia Punto B = 1
+                             // Hacia Punto C = 2
+                             // Espera remove planta = 3
+                             // Hacia Punto B desde C = 4
+                             // Hacia Punto A desde B = 5
 
 void setup() {
     Serial.begin(115200);
+
+    // Inicialización de hardware y módulos
+    setupBLE();
+    configurarSensores();
+    configuracionLeds();
+    ConfigMotor();
+    ConfigEncoder(0,0.0);
+    configurarMPU6500();
+    encenderRojo(); 
+    // Proceso leds
+    // 1- Inicia con led rojo en espera de los datos de matlab
+    // 2- Parpadea en verde esperando planta
+    // 3- led rojo apagado y verde activo en proceso de A a B y a C
+    // 4- Parpadea rojo hasta retirar la planta 
+    // 5- led rojo apagado y verde activo en proceso de C a B y a A
+    // 6- Vuelve a led rojo en espera de datos de matlab
+    
 }
 
 void loop() {
     
-    delay(1000);
+
+    if(Enable){// Si el robot esta conextado y activo 
+      // Ya hay datos en los arreglos
+      
+      //************************************
+      // 2. ¿Planta ubicada correctamente?
+      //************************************
+      while (!detectarObjetoRedundante()) {
+        int espera = 500;
+        encenderVerde(); //Parpadeo de led verde en espera de planta
+        delay(espera/2);
+        apagarVerde();
+        delay(espera/2);
+      }
+      encenderVerde();
+      
+      
+      // Envio de datos del robot 
+      actualizarValores();
+      UpdateEncoderA();
+      UpdateEncoderB();
+
+    
+      PocisionActual =  obtenerPosicionXY();
+      VelocidadActual = obtenerVelocidadX();
+      AnguloActual = obtenerAnguloZ();
+      Rpms = RmpDistance();
+
+      //************************************
+      // 3.2. Envio de datos a matlab
+      //************************************
+      sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(VelocidadActual, 3)+"|R"+String(Rpms, 3));
+
+
+      switch (Estado) {
+        case 0:
+          // En Punto A 
+
+          
+        //************************************
+        // 3.1. Calculo de trayectorias
+        //************************************
+          calcularTrayectoria();
+          distanciaAB = getDistancia_AB();
+          anguloAB = getAngulo_AB();
+          distanciaBC = getDistancia_BC();
+          anguloBC = getAngulo_BC();
+          Estado = 1; 
+
+          break;
+
+        case 1:
+          // Hacia Punto B
+          AngularMotor(anguloAB,255);
+          LinealMotor(distanciaAB,115);
+          delay(10000);
+          Estado = 2; 
+          break;
+
+        case 2:
+          // Hacia Punto C 
+          AngularMotor(anguloBC,255);
+          LinealMotor(distanciaBC,115);
+          Estado = 3; 
+          break;
+
+        case 3:
+          //************************************
+          // 4. Espera remove planta
+          //************************************
+          while (detectarObjetoRedundante()) {
+            int espera = 500;
+            encenderRojo();//Parpadeo de led rojo  en espera de retiro de planta
+            delay(espera/2);
+            apagarRojo();
+            delay(espera/2);
+          }
+          //************************************
+          // 4. Calculo de trayectoria de regreso
+          //************************************
+          volverA_A(); 
+          calcularTrayectoria();
+          distanciaAB = getDistancia_AB();
+          anguloAB = getAngulo_AB();
+          distanciaBC = getDistancia_BC();
+          anguloBC = getAngulo_BC();
+
+          Estado = 4; 
+          break;
+        
+        case 4:
+           // Hacia Punto B desde C
+           AngularMotor(anguloBC,255);
+           LinealMotor(distanciaBC,115);
+           Estado = 5; 
+          break;
+        
+        case 5:
+          // Hacia Punto A desde B
+          AngularMotor(anguloAB,255);
+          LinealMotor(distanciaAB,115);
+          Estado = 0; 
+          Enable = false;
+          break;
+      }
+
+    }else{
+      // Verificar parámetros de entrada
+      String Data = readDataBLE();
+      if(Data!=""){
+        //************************************
+        // 1. Cargar parámetros de entrada
+        //************************************
+        if(parsearDatos(Data)){
+          Enable = true;// Activa el robot
+          apagarRojo();
+          encenderVerde(); 
+
+        }
+      }
+    }
+    
 }
+
 /******************************************************************************/
 //Ejemplo QRE1114
 /******************************************************************************/
@@ -96,4 +253,29 @@ void loop() {
   //RmpDistance();
   delay(10);
 }
+/**/
+
+//*****************************************************************
+// Ejemplo Motores
+//*****************************************************************
+/**
+void setup() {
+  Serial.begin(9600);
+
+  // Posición global del punto A
+  GEX = 0.0; GEY = 0.0; GEA = 0.0;
+
+  // Definición del sistema LOCAL respecto al global
+  LEX = 0.0; LEY = 0.0; LEA = 0.0; // <-- Cámbialos según la orientación y posición del sistema local
+
+  // Puntos B y C en coordenadas locales
+  BX = 100.0; BY = 0.0;
+  CX = 200.0; CY = 100.0;
+
+  calcularTrayectoria();
+  irA_C();
+  volverA_A();  //ESTAS SON LAS FUNCIONES QUE SE DEBEN LLAMAR PARA CALCULAR Y VER LOS PUNTOS, para calcular los puntos y devolvere solo es necesario la primera y la ultima funcion
+}
+
+void loop() {}
 /**/

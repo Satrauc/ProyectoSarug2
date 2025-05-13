@@ -70,7 +70,7 @@ void ConfigEncoder(int encoderTurnCount, float Diameter) {
 /*=======================================
          Cálculo RPM & Distancia
   ========================================*/
-void RmpDistance() {
+float RmpDistance() {
   unsigned long CurrentTime = millis();
   if (CurrentTime - FormerTime >= 100) {
     noInterrupts();
@@ -80,9 +80,10 @@ void RmpDistance() {
     interrupts();
     Rpm = (PulseRead / (float)EncoderFullTurn) * 60.0;
     Distance = (PulseDistance / (float)EncoderFullTurn) * Perimeter;
-    Serial.println("RPM: " + String(Rpm));
-    Serial.println("Distancia: " + String(Distance) + " Cm");
+    //Serial.println("RPM: " + String(Rpm));
+    //Serial.println("Distancia: " + String(Distance) + " Cm");
     FormerTime = CurrentTime;
+    return Rpm;
   }
 }
 
