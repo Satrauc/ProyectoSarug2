@@ -88,11 +88,23 @@ float getDistancia_AB(){
   return distAB;
 }
 float getAngulo_AB(){
-  return angAB;
+  return ang1;
 }
 float getDistancia_BC(){
   return distBC;
 }
 float getAngulo_BC(){
-  return angBC;
+  return ang2;
+}
+
+float getAngulo_CB(){
+  return ang3;
+}
+
+float getAngulo_BA(){
+  return ang4;
+}
+
+float getAngulo_A(){
+  return ang5;
 }
