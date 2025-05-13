@@ -148,31 +148,34 @@ void loop() {
           //************************************
           // 4. Calculo de trayectoria de regreso
           //************************************
-          volverA_A(); 
-          calcularTrayectoria();
-          distanciaAB = getDistancia_AB();
-          anguloAB = getAngulo_AB();
-          distanciaBC = getDistancia_BC();
-          anguloBC = getAngulo_BC();
+          volverA_A();
+          anguloBA = getAngulo_BA();
+          anguloCB = getAngulo_CB();
+          anguloA = getAngulo_A();
 
           Estado = 4; 
           break;
         
         case 4:
            // Hacia Punto B desde C
-           AngularMotor(anguloBC,255);
+           AngularMotor(anguloCB,255);
            LinealMotor(distanciaBC,115);
            Estado = 5; 
           break;
         
         case 5:
           // Hacia Punto A desde B
-          AngularMotor(anguloAB,255);
+          AngularMotor(anguloBA,255);
           LinealMotor(distanciaAB,115);
-          Estado = 0; 
-          Enable = false;
           break;
       }
+
+        caso 6: 
+        // Del angulo en direccion BA a el angulo en posicion inicial
+        AnguloMotor(anguloA,255);
+        Estado = 0; 
+        Enable = false;
+        break;
 
     }else{
       // Verificar parámetros de entrada
