@@ -74,6 +74,9 @@ void volverA_A() {
   float ang4 = GEA - angAB;
   if (ang4 < 0) ang4 += 360;
 
+  float ang5 = GEA - angBA;
+  if (ang5 < 0) ang5 += 360;
+
   /*
   Serial.println("RETORNO: De C a B...");
   Serial.print("Girar "); Serial.print(ang3); Serial.println(" grados");
