@@ -36,8 +36,8 @@ std::vector<float> PocisionActual = {0.0, 0.0};
 float AnguloActual = 90.0;
 float VelocidadActual = 0.0;
 float Rpms = 0.0;
-float distanciaAB, anguloAB;
-float distanciaBC, anguloBC;
+float distanciaAB, anguloAB, angulo BA;
+float distanciaBC, anguloBC, angulo CB, anguloA;
 unsigned char Estado = 0;    // En Punto A = 0
                              // Hacia Punto B = 1
                              // Hacia Punto C = 2
