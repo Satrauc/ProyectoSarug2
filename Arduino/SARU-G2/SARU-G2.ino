@@ -36,8 +36,8 @@ std::vector<float> PocisionActual = {0.0, 0.0};
 float AnguloActual = 90.0;
 float VelocidadActual = 0.0;
 float Rpms = 0.0;
-float distanciaAB, anguloAB;
-float distanciaBC, anguloBC;
+float distanciaAB, anguloAB, angulo BA;
+float distanciaBC, anguloBC, angulo CB, anguloA;
 unsigned char Estado = 0;    // En Punto A = 0
                              // Hacia Punto B = 1
                              // Hacia Punto C = 2
@@ -56,6 +56,7 @@ void setup() {
     ConfigEncoder(0,0.0);
     configurarMPU6500();
     encenderRojo(); 
+    
     // Proceso leds
     // 1- Inicia con led rojo en espera de los datos de matlab
     // 2- Parpadea en verde esperando planta
@@ -99,8 +100,8 @@ void loop() {
       //************************************
       // 3.2. Envio de datos a matlab
       //************************************
-      sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(VelocidadActual, 3)+"|R"+String(Rpms, 3));
-
+      sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(AnguloActual, 3)+"|R:"+String(Rpms, 3));
+      actualizarVariablesDesdeBLE();
 
       switch (Estado) {
         case 0:
@@ -148,31 +149,34 @@ void loop() {
           //************************************
           // 4. Calculo de trayectoria de regreso
           //************************************
-          volverA_A(); 
-          calcularTrayectoria();
-          distanciaAB = getDistancia_AB();
-          anguloAB = getAngulo_AB();
-          distanciaBC = getDistancia_BC();
-          anguloBC = getAngulo_BC();
+          volverA_A();
+          anguloBA = getAngulo_BA();
+          anguloCB = getAngulo_CB();
+          anguloA = getAngulo_A();
 
           Estado = 4; 
           break;
         
         case 4:
            // Hacia Punto B desde C
-           AngularMotor(anguloBC,255);
+           AngularMotor(anguloCB,255);
            LinealMotor(distanciaBC,115);
            Estado = 5; 
           break;
         
         case 5:
           // Hacia Punto A desde B
-          AngularMotor(anguloAB,255);
+          AngularMotor(anguloBA,255);
           LinealMotor(distanciaAB,115);
-          Estado = 0; 
-          Enable = false;
           break;
       }
+
+        caso 6: 
+        // Del angulo en direccion BA a el angulo en posicion inicial
+        AnguloMotor(anguloA,255);
+        Estado = 0; 
+        Enable = false;
+        break;
 
     }else{
       // Verificar parámetros de entrada

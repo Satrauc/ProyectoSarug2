@@ -1,11 +1,3 @@
-// Posición del sistema LOCAL respecto al GLOBAL
-float LEX, LEY, LEA;     // Traslación y ángulo del sistema LOCAL al GLOBAL
-
-// Datos de entrada desde comunicación BLE
-float GEX, GEY, GEA;     // Posición y orientación global del punto A (para cálculos de giros)
-float BX, BY;            // Punto B en sistema LOCAL
-float CX, CY;            // Punto C en sistema LOCAL
-
 // Resultados
 float BxGlobal, ByGlobal;
 float CxGlobal, CyGlobal;
@@ -19,8 +11,28 @@ float ang1, ang2; // Ángulos relativos para girar
 // Transforma punto local a global con la ecuación directa
 void transformarPunto(float x, float y, float alphaDeg, float tx, float ty, float &xOut, float &yOut) {
   float alphaRad = alphaDeg * (PI / 180.0);
-  xOut = x * cos(alphaRad) - y * sin(alphaRad) + tx;
-  yOut = x * sin(alphaRad) + y * cos(alphaRad) + ty;
+
+  // Matriz de transformación homogénea 3x3
+  float T[3][3] = {
+    {cos(alphaRad), -sin(alphaRad), tx},
+    {sin(alphaRad),  cos(alphaRad), ty},
+    {0,              0,             1}
+  };
+
+  // Vector columna del punto local en coordenadas homogéneas
+  float puntoLocal[3] = {x, y, 1};
+
+  // Resultado de la multiplicación T * puntoLocal
+  float resultado[3] = {0, 0, 0};
+  for (int i = 0; i < 3; i++) {
+    for (int k = 0; k < 3; k++) {
+      resultado[i] += T[i][k] * puntoLocal[k];
+    }
+  }
+
+  // Asignar las coordenadas transformadas
+  xOut = resultado[0];
+  yOut = resultado[1];
 }
 
 // Calcula ángulo entre dos puntos
@@ -68,11 +80,27 @@ void calcularTrayectoria() {
   Serial.print("Giro ang2 (de B a C): "); Serial.println(ang2);*/
 }
 
+float normalizar(float ang) {
+  while (ang < 0) ang += 360;
+  while (ang >= 360) ang -= 360;
+  return ang;
+}
+
 void volverA_A() {
-  float ang3 = angAB - angBC;
-  if (ang3 < 0) ang3 += 360;
-  float ang4 = GEA - angAB;
-  if (ang4 < 0) ang4 += 360;
+// Paso 1: De C a B
+  float dxCB = BxGlobal - CxGlobal;
+  float dyCB = ByGlobal - CyGlobal;
+  float angCB = calcularAngulo(dxCB, dyCB);  // dirección de C → B
+  float ang3 = normalizar(angCB - angBC);    // rotación necesaria desde C hacia B
+
+  // Paso 2: De B a A
+  float dxBA = GEX - BxGlobal;
+  float dyBA = GEY - ByGlobal;
+  float angBA = calcularAngulo(dxBA, dyBA);  // dirección de B → A
+  float ang4 = normalizar(angBA - angCB);    // rotación desde B hacia A
+
+  // Paso 3: Ajuste final en A para regresar a la orientación inicial
+  float ang5 = normalizar(GEA - angBA);      // rotación para igualar ángulo inicial en A
 
   /*
   Serial.println("RETORNO: De C a B...");
@@ -88,11 +116,23 @@ float getDistancia_AB(){
   return distAB;
 }
 float getAngulo_AB(){
-  return angAB;
+  return ang1;
 }
 float getDistancia_BC(){
   return distBC;
 }
 float getAngulo_BC(){
-  return angBC;
+  return ang2;
+}
+
+float getAngulo_CB(){
+  return ang3;
+}
+
+float getAngulo_BA(){
+  return ang4;
+}
+
+float getAngulo_A(){
+  return ang5;
 }
