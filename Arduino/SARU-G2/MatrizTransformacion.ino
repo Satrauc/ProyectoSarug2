@@ -30,6 +30,11 @@ void transformarPunto(float x, float y, float alphaDeg, float tx, float ty, floa
     }
   }
 
+  // Asignar las coordenadas transformadas
+  xOut = resultado[0];
+  yOut = resultado[1];
+}
+
 // Calcula ángulo entre dos puntos
 float calcularAngulo(float dx, float dy) {
   float anguloRad = atan2(dy, dx);
