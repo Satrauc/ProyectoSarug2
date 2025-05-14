@@ -1,23 +1,30 @@
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
-
-// UUIDs personalizados
-#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
-#define CHARACTERISTIC_TX   "abcd1234-ab12-cd34-ef56-abcdef123456"  // ESP32 → MATLAB
-#define CHARACTERISTIC_RX   "dcba4321-ba21-dc43-fe65-fedcba654321"  // MATLAB → ESP32
-
 BLECharacteristic* pTxCharacteristic;
 BLECharacteristic* pRxCharacteristic;
 bool deviceConnected = false;
 String rxValue = "";
 
 // Arreglos para almacenar valores
-float Grobal[3];  // GEX, GEY, GEA
+/*float Global[3];  // GEX, GEY, GEA
 float Local[3];   // LEX, LEY, LEA
 float PuntoB[2];  // BX, BY
-float PuntoC[2];  // CX, CY
+float PuntoC[2];  // CX, CY*/
+/*
+void actualizarVariablesDesdeBLE() {
+  GEX = Global[0];
+  GEY = Global[1];
+  GEA = Global[2];
+
+  LEX = Local[0];
+  LEY = Local[1];
+  LEA = Local[2];
+
+  BX = PuntoB[0];
+  BY = PuntoB[1];
+
+  CX = PuntoC[0];
+  CY = PuntoC[1];
+}
+*/
 
 // ---------------------------------------------
 // Funciónes: Para la configuracion del Bluetooth en ESP32
@@ -95,7 +102,8 @@ String readDataBLE() {
 // Función: Parsea la cadena de texto en arreglos
 // Ejemplo de trama "GEX:10.5|GEY:20.2|GEA:30.3;LEX:5.0|LEY:15.0|LEA:25.0;BX:100.0|BY:200.0;CX:300.0|CY:400.0;";
 // ---------------------------------------------
-void parsearDatos(String cadena) {
+bool parsearDatos(String cadena) {
+  bool respuesta = false;
   while (cadena.length() > 0) {
     int index = cadena.indexOf(';');
     String segmento = (index != -1) ? cadena.substring(0, index) : cadena;
@@ -110,10 +118,10 @@ void parsearDatos(String cadena) {
       if (dosPuntos != -1) {
         String clave = campo.substring(0, dosPuntos);
         float valor = campo.substring(dosPuntos + 1).toFloat();
-
-        if (clave == "GEX") Grobal[0] = valor;
-        else if (clave == "GEY") Grobal[1] = valor;
-        else if (clave == "GEA") Grobal[2] = valor;
+        
+        if (clave == "GEX") Global[0] = valor;
+        else if (clave == "GEY") Global[1] = valor;
+        else if (clave == "GEA") Global[2] = valor;
         else if (clave == "LEX") Local[0] = valor;
         else if (clave == "LEY") Local[1] = valor;
         else if (clave == "LEA") Local[2] = valor;
@@ -121,17 +129,19 @@ void parsearDatos(String cadena) {
         else if (clave == "BY")  PuntoB[1] = valor;
         else if (clave == "CX")  PuntoC[0] = valor;
         else if (clave == "CY")  PuntoC[1] = valor;
+        respuesta = true;
       }
     }
   }
+  return respuesta;
 }
 
 // ---------------------------------------------
 // Función: Imprime los valores parseados
 // ---------------------------------------------
 void imprimirDatos() {
-  Serial.println("Grobal:");
-  Serial.println(Grobal[0]); Serial.println(Grobal[1]); Serial.println(Grobal[2]);
+  Serial.println("Global:");
+  Serial.println(Global[0]); Serial.println(Global[1]); Serial.println(Global[2]);
 
   Serial.println("Local:");
   Serial.println(Local[0]); Serial.println(Local[1]); Serial.println(Local[2]);

@@ -1,5 +1,3 @@
-#include <math.h>
-
 // Resultados
 float BxGlobal, ByGlobal;
 float CxGlobal, CyGlobal;
@@ -7,13 +5,34 @@ float CxGlobal, CyGlobal;
 float distAB, angAB;
 float distBC, angBC;
 
-float ang1, ang2; // Ángulos relativos para girar
+float ang1, ang2, ang3, ang4, ang5; // Ángulos relativos para girar
+
 
 // Transforma punto local a global con la ecuación directa
 void transformarPunto(float x, float y, float alphaDeg, float tx, float ty, float &xOut, float &yOut) {
   float alphaRad = alphaDeg * (PI / 180.0);
-  xOut = x * cos(alphaRad) - y * sin(alphaRad) + tx;
-  yOut = x * sin(alphaRad) + y * cos(alphaRad) + ty;
+
+  // Matriz de transformación homogénea 3x3
+  float T[3][3] = {
+    {cos(alphaRad), -sin(alphaRad), tx},
+    {sin(alphaRad),  cos(alphaRad), ty},
+    {0,              0,             1}
+  };
+
+  // Vector columna del punto local en coordenadas homogéneas
+  float puntoLocal[3] = {x, y, 1};
+
+  // Resultado de la multiplicación T * puntoLocal
+  float resultado[3] = {0, 0, 0};
+  for (int i = 0; i < 3; i++) {
+    for (int k = 0; k < 3; k++) {
+      resultado[i] += T[i][k] * puntoLocal[k];
+    }
+  }
+
+  // Asignar las coordenadas transformadas
+  xOut = resultado[0];
+  yOut = resultado[1];
 }
 
 // Calcula ángulo entre dos puntos
@@ -25,8 +44,8 @@ float calcularAngulo(float dx, float dy) {
 }
 
 // Paso 1 a 5: Preparar datos y calcular vectores/distancias/ángulos
-void calcularTrayectoria() {
-  // 1. Transformar puntos locales B y C a coordenadas globales
+void calcularTrayectoria(float BX, float BY, float LEA, float LEX, float LEY, float CX, float CY, float GEX, float GEY, float GEA) {
+  // 1. Transformar puntos locales B y C a coordenadas globales usando LEX, LEY, LEA
   transformarPunto(BX, BY, LEA, LEX, LEY, BxGlobal, ByGlobal);
   transformarPunto(CX, CY, LEA, LEX, LEY, CxGlobal, CyGlobal);
 
@@ -42,7 +61,7 @@ void calcularTrayectoria() {
   distBC = sqrt(dxBC * dxBC + dyBC * dyBC);
   angBC = calcularAngulo(dxBC, dyBC);
 
-  // 4. Calcular giros relativos
+  // 4. Calcular giros (ángulos relativos)
   ang1 = angAB - GEA;
   if (ang1 < 0) ang1 += 360;
 
@@ -50,7 +69,7 @@ void calcularTrayectoria() {
   if (ang2 < 0) ang2 += 360;
 
   // Mostrar resultados
-  Serial.println("Transformación completa:");
+  /*Serial.println("Transformación completa:");
   Serial.print("Punto B Global: "); Serial.print(BxGlobal); Serial.print(", "); Serial.println(ByGlobal);
   Serial.print("Punto C Global: "); Serial.print(CxGlobal); Serial.print(", "); Serial.println(CyGlobal);
   Serial.print("Distancia AB: "); Serial.println(distAB);
@@ -58,125 +77,62 @@ void calcularTrayectoria() {
   Serial.print("Distancia BC: "); Serial.println(distBC);
   Serial.print("Ángulo BC: "); Serial.println(angBC);
   Serial.print("Giro ang1 (de A a B): "); Serial.println(ang1);
-  Serial.print("Giro ang2 (de B a C): "); Serial.println(ang2);
+  Serial.print("Giro ang2 (de B a C): "); Serial.println(ang2);*/
 }
 
-// Definición de epsilon para comparaciones de ángulos
-const float EPSILON = 1e-2;
-
-// Función para normalizar ángulos entre 0 y 360
 float normalizar(float ang) {
   while (ang < 0) ang += 360;
   while (ang >= 360) ang -= 360;
   return ang;
 }
 
-// Función para imprimir giro con dirección mínima e indicando izquierda o derecha
-void imprimirGiro(float ang) {
-  ang = normalizar(ang);
-  
-  // Aplicar epsilon: si el ángulo es muy pequeño, no girar
-  if (abs(ang) < EPSILON || abs(ang - 360) < EPSILON) {
-    Serial.println("No es necesario girar.");
-  }
-  else if (ang <= 180) {
-    Serial.print("Girar a la IZQUIERDA: ");
-    Serial.print(ang);
-    Serial.println(" grados");
-  } else {
-    Serial.print("Girar a la DERECHA: ");
-    Serial.print(360 - ang);
-    Serial.println(" grados");
-  }
-}
-
-
-// Función para ir desde A hasta C (ida)
-void irA_C() {
-  Serial.println("MOVIMIENTO: Ir de A a B...");
-  imprimirGiro(ang1);
-  Serial.print("Avanzar "); Serial.print(distAB); Serial.println(" centimetros");
-
-  Serial.println("MOVIMIENTO: Ir de B a C...");
-  imprimirGiro(ang2);
-  Serial.print("Avanzar "); Serial.print(distBC); Serial.println(" centimetros");
-} //ESTA FUNCION ES SOLO PARA IMPRIMIR LAS DISTANCIAS Y GIROS QUE DEBERIA AVANZAR
-
-// Función principal para volver al punto A
-void volverA_A() {
-  // Paso 1: De C a B
+void volverA_A(float GEX, float GEY, float GEA) {
+// Paso 1: De C a B
   float dxCB = BxGlobal - CxGlobal;
   float dyCB = ByGlobal - CyGlobal;
   float angCB = calcularAngulo(dxCB, dyCB);  // dirección de C → B
-  float ang3 = normalizar(angCB - angBC);    // rotación necesaria desde C hacia B
+  ang3 = normalizar(angCB - angBC);    // rotación necesaria desde C hacia B
 
   // Paso 2: De B a A
   float dxBA = GEX - BxGlobal;
   float dyBA = GEY - ByGlobal;
   float angBA = calcularAngulo(dxBA, dyBA);  // dirección de B → A
-  float ang4 = normalizar(angBA - angCB);    // rotación desde B hacia A
+  ang4 = normalizar(angBA - angCB);    // rotación desde B hacia A
 
   // Paso 3: Ajuste final en A para regresar a la orientación inicial
-  float ang5 = normalizar(GEA - angBA);      // rotación para igualar ángulo inicial en A
+  ang5 = normalizar(GEA - angBA);      // rotación para igualar ángulo inicial en A
 
-  // OUTPUT
+  /*
   Serial.println("RETORNO: De C a B...");
-  imprimirGiro(ang3);
+  Serial.print("Girar "); Serial.print(ang3); Serial.println(" grados");
   Serial.print("Avanzar "); Serial.print(distBC); Serial.println(" unidades");
 
   Serial.println("RETORNO: De B a A...");
-  imprimirGiro(ang4);
-  Serial.print("Avanzar "); Serial.print(distAB); Serial.println(" unidades");
+  Serial.print("Girar "); Serial.print(ang4); Serial.println(" grados");
+  Serial.print("Avanzar "); Serial.print(distAB); Serial.println(" unidades");*/
+} 
 
-  Serial.println("RETORNO: En A...");
-  imprimirGiro(ang5);
+float getDistancia_AB(){
+  return distAB;
+}
+float getAngulo_AB(){
+  return ang1;
+}
+float getDistancia_BC(){
+  return distBC;
+}
+float getAngulo_BC(){
+  return ang2;
 }
 
-/*void actualizarVariablesDesdeBLE() {
-  GEX = Grobal[0];
-  GEY = Grobal[1];
-  GEA = Grobal[2];
-
-  LEX = Local[0];
-  LEY = Local[1];
-  LEA = Local[2];
-
-  BX = PuntoB[0];
-  BY = PuntoB[1];
-
-  CX = PuntoC[0];
-  CY = PuntoC[1];
+float getAngulo_CB(){
+  return ang3;
 }
-*/ /// IMPORTANTE:
-// La función actualizarVariablesDesdeBLE() NO debe estar aquí.
-// Debe estar en el módulo de comunicaciones, donde se reciben los datos BLE.
-// Solo se llama desde allá después de parsear los datos en el main.
 
-// PRUEBA 
-/*void setup() {
-  Serial.begin(9600);
-setupBLE();  // Inicia el BLE
+float getAngulo_BA(){
+  return ang4;
+}
 
-  // Espera hasta recibir datos por primera vez
-  while (!deviceConnected || rxValue.length() == 0) {
-    delay(100);
-  }
-
-  // Procesar solo una vez
-  parsearDatos(rxValue);
-  actualizarVariablesDesdeBLE();  // <--- Esta función copia los datos a LEX, LEY, etc.
- 
-  rxValue = "";
- 
-  calcularTrayectoria();  // A → B → C
-  irA_C();                // Movimiento hacia adelante
-  volverA_A();            // Regreso al punto inicial
-
-  
-}  // ESTO ES UN EJEMPLO DE LO QUE DE BERIA IR EN EL SETUP PARA INICIALIZAR LAS VARIABLES POR MEDIO DE BLE Y QEU FUNCIONEN LAS FUNCIONES DE LAS MATRICES 
-
-void loop() {
-  // Nada
-}*/
-
-
+float getAngulo_A(){
+  return ang5;
+}
