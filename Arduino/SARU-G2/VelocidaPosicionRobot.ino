@@ -12,13 +12,34 @@ float posX = 0.0;
 float posY = 0.0;
 float angZ = 0.0;
 
+bool giroActivo = false;
+unsigned long tiempoQuietoAnterior = 0;
 unsigned long tiempoAnterior = 0;
+// Filtros
+float bufferAcelX[N] = {0}, bufferAcelY[N] = {0};
+int idxFiltro = 0;
+
+// Estado de movimiento
+bool movimientoX = false, movimientoY = false;
+unsigned long tQuietoX = 0, tQuietoY = 0;
+
+float acelX_hist[N] = {0};
+float acelY_hist[N] = {0};
+float gyroZ_hist[N] = {0};
+
+int indx = 0;
+
 
 //**********************************************
 // Función de configuración del sensor MPU6500
 // Inicializa el sensor, configura los rangos de aceleración y giroscopio,
 // y realiza una calibración inicial para los ejes X, Y (acelerómetro) y Z (giroscopio).
 //**********************************************
+float stdAcelX = 0, stdAcelY = 0;
+float stdVelX = 0, stdVelY = 0;
+
+
+
 void configurarMPU6500() {
   Wire.begin();
   Wire.setClock(400000);
@@ -36,7 +57,7 @@ void configurarMPU6500() {
   // Calibración inicial de acelerómetro y giroscopio
   Serial.println("Calibrando acelerómetro y giróscopo...");
   delay(500);
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 100; i++) {
     IMU.update();
     IMU.getAccel(&accelData);
     IMU.getGyro(&gyroData);
@@ -45,9 +66,9 @@ void configurarMPU6500() {
     offsetGyroZ += gyroData.gyroZ;
     delay(10);
   }
-  offsetAcelX /= 20.0;
-  offsetAcelY /= 20.0;
-  offsetGyroZ /= 20.0;
+  offsetAcelX /= 100.0;
+  offsetAcelY /= 100.0;
+  offsetGyroZ /= 100.0;
 
   tiempoAnterior = micros();
 }
@@ -59,35 +80,88 @@ void configurarMPU6500() {
 //**********************************************
 void actualizarValores() {
   unsigned long tiempoActual = micros();
-  float deltaT = (tiempoActual - tiempoAnterior) / 1000000.0; // en segundos
+  float deltaT = (tiempoActual - tiempoAnterior) / 1000000.0;
   tiempoAnterior = tiempoActual;
 
   IMU.update();
   IMU.getAccel(&accelData);
   IMU.getGyro(&gyroData);
 
-  // Procesamiento aceleración en X
-  float acelX = (accelData.accelX - offsetAcelX) * 977.86; // cm/s²
-  if (abs(acelX) < 1.0) acelX = 0.0;
+  // --- Aceleración cruda ---
+  float acelXraw = (accelData.accelX - offsetAcelX) * 981;
+  float acelYraw = (accelData.accelY - offsetAcelY) * 981;
 
-  velX += acelX * deltaT; // cm/s
-  if (abs(velX) < 0.1) velX = 0.0;
+  // --- Filtro media móvil ---
+  bufferAcelX[idxFiltro] = acelXraw;
+  bufferAcelY[idxFiltro] = acelYraw;
+  idxFiltro = (idxFiltro + 1) % N;
 
-  posX += velX * deltaT; // cm
+  float sumaX = 0, sumaY = 0;
+  for (int i = 0; i < N; i++) {
+    sumaX += bufferAcelX[i];
+    sumaY += bufferAcelY[i];
+  }
 
-  // Procesamiento aceleración en Y
-  float acelY = (accelData.accelY - offsetAcelY) * 977.86; // cm/s²
-  if (abs(acelY) < 1.0) acelY = 0.0;
+  float acelX = sumaX / N;
+  float acelY = sumaY / N;
 
-  velY += acelY * deltaT; // cm/s
-  if (abs(velY) < 0.1) velY = 0.0;
+  // --- Movimiento en X ---
+  if (abs(acelX) < UMBRAL_ACEL) {
+    /*Serial.print("Menor al umbral/");
+    Serial.print("Aceleracion X: "+String(acelX));
+    Serial.println(" | Velocidad X: "+String(velX));*/
+    if (!movimientoX) {
+      if (millis() - tQuietoX > TIEMPO_QUIETO_MS) {
+        velX = 0;
+        acelX = 0;
+      }
+    } else {
+      movimientoX = false;
+      tQuietoX = millis();
+    }
+  } else {
+    /*Serial.print("Mayor al umbral/");
+    Serial.print("Aceleracion X: "+String(acelX));
+    Serial.println(" | Velocidad X: "+String(velX));*/
+    movimientoX = true;
+    velX += acelX * deltaT;
+    posX += velX * deltaT;
+  }
 
-  posY += velY * deltaT; // cm
+  // --- Movimiento en Y ---
+  if (abs(acelY) < UMBRAL_ACEL) {
+    if (!movimientoY) {
+      if (millis() - tQuietoY > TIEMPO_QUIETO_MS) {
+        velY = 0;
+        acelY = 0;
+      }
+    } else {
+      movimientoY = false;
+      tQuietoY = millis();
+    }
+  } else {
+    movimientoY = true;
+    velY += acelY * deltaT;
+    posY += velY * deltaT;
+  }
 
-  // Procesamiento giroscopio Z
-  float gyroZ = gyroData.gyroZ - offsetGyroZ; // °/s
-  angZ += gyroZ * deltaT; // grados
+  // --- Giroscopio Z ---
+  float gyroZ = gyroData.gyroZ - offsetGyroZ;
+  if (abs(gyroZ) > 0.5) {
+    angZ += gyroZ * deltaT;
+    giroActivo = true;
+    tiempoQuietoAnterior = millis();
+  } else {
+    if (giroActivo && (millis() - tiempoQuietoAnterior > 100)) {
+      giroActivo = false;
+    }
+  }
+
+  // Normalizar ángulo
+  if (angZ > 180.0) angZ -= 360.0;
+  if (angZ < -180.0) angZ += 360.0;
 }
+
 
 //**********************************************
 // Función para obtener la posición X y Y del sensor
@@ -113,5 +187,16 @@ float obtenerVelocidadX() {
 // resultado de integrar la velocidad angular sobre el tiempo.
 //**********************************************
 float obtenerAnguloZ() {
+  
   return angZ;
+}
+
+//***********************************************
+// Filtro de promedio movil
+//***********************************************
+float filtroPromedio(float* buffer, float nuevaLectura) {
+  buffer[indx] = nuevaLectura;
+  float suma = 0;
+  for (int i = 0; i < N; i++) suma += buffer[i];
+  return suma / N;
 }
