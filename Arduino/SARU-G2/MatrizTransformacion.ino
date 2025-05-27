@@ -44,6 +44,7 @@ float calcularAngulo(float dx, float dy) {
 }
 
 // Paso 1 a 5: Preparar datos y calcular vectores/distancias/ángulos
+<<<<<<< HEAD
 void calcularTrayectoria(float BX, float BY, float LEA, float LEX, float LEY, float CX, float CY, float GEX, float GEY, float GEA) {
   // 1. Transformar puntos locales B y C a coordenadas globales usando LEX, LEY, LEA
   transformarPunto(BX, BY, LEA, LEX, LEY, BxGlobal, ByGlobal);
@@ -52,6 +53,32 @@ void calcularTrayectoria(float BX, float BY, float LEA, float LEX, float LEY, fl
   // 2. Calcular vector A → B
   float dxAB = BxGlobal - GEX;
   float dyAB = ByGlobal - GEY;
+=======
+void calcularTrayectoria() {
+  /*
+  Equivalencias del arreglo de datos
+  GEX = Grobal[0];
+  GEY = Grobal[1];
+  GEA = Grobal[2];
+
+  LEX = Local[0];
+  LEY = Local[1];
+  LEA = Local[2];
+
+  BX = PuntoB[0];
+  BY = PuntoB[1];
+
+  CX = PuntoC[0];
+  CY = PuntoC[1];
+  */
+  // 1. Transformar puntos locales B y C a coordenadas globales usando LEX, LEY, LEA
+  transformarPunto(PuntoB[0], PuntoB[1], Local[2], Local[0], Local[1], BxGlobal, ByGlobal);
+  transformarPunto(PuntoC[0], PuntoC[1], Local[2], Local[0], Local[1], CxGlobal, CyGlobal);
+
+  // 2. Calcular vector A → B
+  float dxAB = BxGlobal - Grobal[0];
+  float dyAB = ByGlobal - Grobal[1];
+>>>>>>> Cuartas
   distAB = sqrt(dxAB * dxAB + dyAB * dyAB);
   angAB = calcularAngulo(dxAB, dyAB);
 
@@ -62,12 +89,17 @@ void calcularTrayectoria(float BX, float BY, float LEA, float LEX, float LEY, fl
   angBC = calcularAngulo(dxBC, dyBC);
 
   // 4. Calcular giros (ángulos relativos)
+<<<<<<< HEAD
   ang1 = angAB - GEA;
+=======
+  ang1 = angAB - Grobal[2];
+>>>>>>> Cuartas
   if (ang1 < 0) ang1 += 360;
 
   ang2 = angBC - angAB;
   if (ang2 < 0) ang2 += 360;
 
+<<<<<<< HEAD
   // Mostrar resultados
   /*Serial.println("Transformación completa:");
   Serial.print("Punto B Global: "); Serial.print(BxGlobal); Serial.print(", "); Serial.println(ByGlobal);
@@ -78,6 +110,8 @@ void calcularTrayectoria(float BX, float BY, float LEA, float LEX, float LEY, fl
   Serial.print("Ángulo BC: "); Serial.println(angBC);
   Serial.print("Giro ang1 (de A a B): "); Serial.println(ang1);
   Serial.print("Giro ang2 (de B a C): "); Serial.println(ang2);*/
+=======
+>>>>>>> Cuartas
 }
 
 float normalizar(float ang) {
@@ -86,11 +120,32 @@ float normalizar(float ang) {
   return ang;
 }
 
+<<<<<<< HEAD
 void volverA_A(float GEX, float GEY, float GEA) {
+=======
+void volverA_A() {
+  /*
+  Equivalencias del arreglo de datos
+  GEX = Grobal[0];
+  GEY = Grobal[1];
+  GEA = Grobal[2];
+
+  LEX = Local[0];
+  LEY = Local[1];
+  LEA = Local[2];
+
+  BX = PuntoB[0];
+  BY = PuntoB[1];
+
+  CX = PuntoC[0];
+  CY = PuntoC[1];
+  */
+>>>>>>> Cuartas
 // Paso 1: De C a B
   float dxCB = BxGlobal - CxGlobal;
   float dyCB = ByGlobal - CyGlobal;
   float angCB = calcularAngulo(dxCB, dyCB);  // dirección de C → B
+<<<<<<< HEAD
   ang3 = normalizar(angCB - angBC);    // rotación necesaria desde C hacia B
 
   // Paso 2: De B a A
@@ -101,6 +156,18 @@ void volverA_A(float GEX, float GEY, float GEA) {
 
   // Paso 3: Ajuste final en A para regresar a la orientación inicial
   ang5 = normalizar(GEA - angBA);      // rotación para igualar ángulo inicial en A
+=======
+  float ang3 = normalizar(angCB - angBC);    // rotación necesaria desde C hacia B
+
+  // Paso 2: De B a A
+  float dxBA = Grobal[0] - BxGlobal;
+  float dyBA = Grobal[1] - ByGlobal;
+  float angBA = calcularAngulo(dxBA, dyBA);  // dirección de B → A
+  float ang4 = normalizar(angBA - angCB);    // rotación desde B hacia A
+
+  // Paso 3: Ajuste final en A para regresar a la orientación inicial
+  float ang5 = normalizar(Grobal[2] - angBA);      // rotación para igualar ángulo inicial en A
+>>>>>>> Cuartas
 
   /*
   Serial.println("RETORNO: De C a B...");

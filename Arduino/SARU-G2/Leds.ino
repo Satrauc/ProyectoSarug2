@@ -1,4 +1,9 @@
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> Cuartas
 void configuracionLeds() {
   pinMode(RedLed, OUTPUT);
   pinMode(RedLed, OUTPUT);

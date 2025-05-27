@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 const int sensores[] = {36, 39, 32, 33};  // Usa de 1 a 4 sensores
 const int cantidadSensores = 4;
 const int umbral = 500;
 
+=======
+
+const int sensores[] = {36, 39, 32, 33};  // Usa de 1 a 4 sensores
+const int cantidadSensores = 4;
+const int umbral = 1000;
+
+>>>>>>> Cuartas
 
 // Configuración de múltiples sensores QRE1113/QRE1114
 void configurarSensores() {
@@ -11,7 +19,12 @@ void configurarSensores() {
 }
 
 // Función para leer múltiples veces un solo sensor y calcular una media más precisa
+<<<<<<< HEAD
 int lecturaPrecisa(int Sensor, int repeticiones = 10) {
+=======
+int lecturaPrecisa(int Sensor) {
+  int repeticiones = 10;
+>>>>>>> Cuartas
   long suma = 0;
   for (int i = 0; i < repeticiones; i++) {
     suma += analogRead(Sensor);
@@ -21,8 +34,14 @@ int lecturaPrecisa(int Sensor, int repeticiones = 10) {
 }
 
 // Función para detectar objeto con un solo sensor usando múltiples lecturas
+<<<<<<< HEAD
 bool detectarObjetoPreciso(int Sensor = QRE_PIN) {
   int promedio = lecturaPrecisa(Sensor);
+=======
+bool detectarObjetoPreciso(int Sensor) {
+  int promedio = lecturaPrecisa(Sensor);
+  //Serial.println(promedio);
+>>>>>>> Cuartas
   return promedio < umbral;
 }
 

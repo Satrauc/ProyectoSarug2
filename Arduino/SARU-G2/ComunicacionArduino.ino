@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> Cuartas
 BLECharacteristic* pTxCharacteristic;
 BLECharacteristic* pRxCharacteristic;
 bool deviceConnected = false;
@@ -26,6 +31,21 @@ void actualizarVariablesDesdeBLE() {
 }
 */
 
+/*void actualizarVariablesDesdeBLE() {
+  GEX = Grobal[0];
+  GEY = Grobal[1];
+  GEA = Grobal[2];
+
+  LEX = Local[0];
+  LEY = Local[1];
+  LEA = Local[2];
+
+  BX = PuntoB[0];
+  BY = PuntoB[1];
+
+  CX = PuntoC[0];
+  CY = PuntoC[1];
+}*/
 // ---------------------------------------------
 // Funciónes: Para la configuracion del Bluetooth en ESP32
 /*
@@ -51,7 +71,8 @@ class MyServerCallbacks : public BLEServerCallbacks {
 // Clase para recepción de datos desde MATLAB
 class MyRxCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* pCharacteristic) override {
-    rxValue = pCharacteristic->getValue();
+    //rxValue = pCharacteristic->getValue();
+    rxValue = String(pCharacteristic->getValue().c_str());
   }
 };
 
