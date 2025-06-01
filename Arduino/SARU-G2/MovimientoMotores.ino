@@ -33,10 +33,7 @@ float Rpm = 0.0;
 /*=======================================
      Acelerómetro y Giroscopio MPU6050
   ========================================*/
-<<<<<<< HEAD
 //Simple_MPU6050 mpu;
-=======
->>>>>>> Cuartas
 float CurrentYaw = 0.0;
 
 /*=======================================
@@ -46,26 +43,16 @@ bool Turning = false;
 float Distance = 0.0;
 int Perimeter;
 
-<<<<<<< HEAD
-=======
 float errorAnguloMax = 2.0;       // Margen de error en grados para el giro
 float errorDistanciaMax = 1.0;    // Margen de error en cm para avanzar
 float distanciaSensorALlanta = 10.0; // cm, ajustar según la posición del sensor
-
->>>>>>> Cuartas
 /*=======================================
        Configuración de los Motores
   ========================================*/
 void ConfigMotor( ) {
   for (byte i = 0; i < 4; i++) pinMode(Motor[i], OUTPUT);
   pinMode(Stby, OUTPUT);
-<<<<<<< HEAD
   digitalWrite(Stby, HIGH);
-  //ledcSetup(pwmChannelA, 1000, 8);
-  //ledcAttachPin(Pwm[0], pwmChannelA);
-  //ledcSetup(pwmChannelB, 1000, 8);
-  //ledcAttachPin(Pwm[1], pwmChannelB);
-=======
   
   ledcSetup(pwmChannelA, 1000, 8);
   ledcAttachPin(Pwm[0], pwmChannelA);
@@ -73,7 +60,6 @@ void ConfigMotor( ) {
   ledcAttachPin(Pwm[1], pwmChannelB);
   
   digitalWrite(Stby, HIGH);
->>>>>>> Cuartas
 }
 
 /*=======================================
@@ -100,24 +86,16 @@ float RmpDistance() {
     interrupts();
     Rpm = (PulseRead / (float)EncoderFullTurn) * 60.0;
     Distance = (PulseDistance / (float)EncoderFullTurn) * Perimeter;
-    //Serial.println("RPM: " + String(Rpm));
-    //Serial.println("Distancia: " + String(Distance) + " Cm");
     FormerTime = CurrentTime;
+    
     return Rpm;
   }
+  return 0;
 }
 
 /*=======================================
        Movimiento Lineal del Motor
   ========================================*/
-<<<<<<< HEAD
-void LinealMotor(float DistancePoint, int BaseSpeed) {
-  if (Distance <= DistancePoint && !Turning) {
-    digitalWrite(Motor[0], HIGH);
-    digitalWrite(Motor[1], LOW);
-    digitalWrite(Motor[2], HIGH);
-    digitalWrite(Motor[3], LOW);
-=======
 void LinealMotor(float DistancePoint, int BaseSpeed, bool reverse) {
   
   if (Distance <= DistancePoint && !Turning) {
@@ -132,7 +110,6 @@ void LinealMotor(float DistancePoint, int BaseSpeed, bool reverse) {
       digitalWrite(Motor[2], LOW);
       digitalWrite(Motor[3], HIGH);
     }
->>>>>>> Cuartas
 
     if (CountEncoderA > CountEncoderB + 5) {
       ledcWrite(pwmChannelA, BaseSpeed - 10);
@@ -145,7 +122,6 @@ void LinealMotor(float DistancePoint, int BaseSpeed, bool reverse) {
       ledcWrite(pwmChannelB, BaseSpeed);
     }
   } else if (!Turning) {
-<<<<<<< HEAD
     digitalWrite(Motor[0], LOW);
     digitalWrite(Motor[1], LOW);
     digitalWrite(Motor[2], LOW);
@@ -153,30 +129,10 @@ void LinealMotor(float DistancePoint, int BaseSpeed, bool reverse) {
 
     ledcWrite(pwmChannelA, 0);
     ledcWrite(pwmChannelB, 0);
-=======
-    detenerMotores();
->>>>>>> Cuartas
     Turning = true;
     CurrentYaw = 0.0;
   }
 }
-<<<<<<< HEAD
-
-=======
-/*
-void EjecutarMovimientoLineal(float distanciaObjetivo) {// Distancia en centimetros
-  Distance = 0; // Reset si es necesario
-  int Velocidad = 115;
-  while (Distance < distanciaObjetivo) {
-    RmpDistance();
-    actualizarValores();     // Actualiza sensor MPU
-    LinealMotor(distanciaObjetivo, Velocidad,false);  // Ejecuta lógica de movimiento
-    delay(10);               // Control de tiempo mínimo entre pasos
-  }
-  detenerMotores();          // Apaga los motores al final
-}
-*/
->>>>>>> Cuartas
 /*=======================================
      Movimiento Angular del Motor
   ========================================*/
@@ -190,13 +146,8 @@ void AngularMotor(float TargetAngle, int BaseSpeed) {
     //mpu.dmp_read_fifo();
     //float gyroZ = mpu.gyro[2] / 131.0;
     actualizarValores();
-<<<<<<< HEAD
-    CurrentYaw += obtenerAnguloZ() * dt;
- 
-=======
     float angulo = obtenerAnguloZ();
     CurrentYaw += angulo * dt;
->>>>>>> Cuartas
 
     if (abs(CurrentYaw) < TargetAngle) {
       digitalWrite(Motor[0], HIGH);
@@ -207,7 +158,6 @@ void AngularMotor(float TargetAngle, int BaseSpeed) {
       ledcWrite(pwmChannelA, BaseSpeed);
       ledcWrite(pwmChannelB, BaseSpeed);
     } else {
-<<<<<<< HEAD
       digitalWrite(Motor[0], LOW);
       digitalWrite(Motor[1], LOW);
       digitalWrite(Motor[2], LOW);
@@ -220,41 +170,22 @@ void AngularMotor(float TargetAngle, int BaseSpeed) {
     }
   }
 }
-=======
-      detenerMotores();
-      Turning = false;
-    }
-  }
-}
-void EjecutarMovimientoAngular(float anguloObjetivo) {
-  if (!Turning) {
-    Turning = true;
-    CurrentYaw = 0.0;
-  }
-  float valor = abs(CurrentYaw - anguloObjetivo);
-  while ( valor> 1.0) { // margen de error
-    valor = abs(CurrentYaw - anguloObjetivo);
-    RmpDistance();
-    actualizarValores();
-    AngularMotor(anguloObjetivo, 50);
-    delay(10);
-    Serial.println(valor);
-  }
-  detenerMotores();
+/*=======================================
+              Conteo Encoder
+  ========================================*/
+void UpdateEncoderA() {
+  CountEncoderA++;
+  DistanceEncoder++;
 }
 
-void detenerMotores(){
-  digitalWrite(Motor[0], HIGH);
-  digitalWrite(Motor[1], HIGH);
-  digitalWrite(Motor[2], HIGH);
-  digitalWrite(Motor[3], HIGH);
-
-  ledcWrite(pwmChannelA, 0);
-  ledcWrite(pwmChannelB, 0);
+void UpdateEncoderB() {
+  CountEncoderB++;
 }
+
 /*=======================================
      Funciones Cuartas
   ========================================*/
+/**
 void EjecutarMovimientoLineal(float distancia, int velocidad, bool reversa) {
   Distance = 0;
   Turning = false;
@@ -273,27 +204,32 @@ void EjecutarMovimientoAngular(float angulo, int velocidad) {
     delay(10);
   }
 }
+/**/
 
 void Mover(float distanciaObjetivo, bool reversa) {
   float Proporcional = 0.65;
-  int velocidadBase = 100;
+  int velocidadBase = VELOCIDAD_LINEAL;
   Distance = 0;  // Reiniciar distancia
   bool completado = false;
-
-  actualizarValores();
+  sendDataBLE("----Distancia Objetivo "+String(distanciaObjetivo));
+  Serial.println("----Distancia Objetivo "+String(distanciaObjetivo));
+  Actualizar_EnvioDatos();
+  Resetang();
   float anguloInicial = obtenerAnguloZ();
-
+  
   while (!completado) {
-    RmpDistance();
-
+    
+    Actualizar_EnvioDatos();
+    
+    sendDataBLE("Distancia actual: "+String(Distance)+" Error: "+String(Distance - distanciaObjetivo));
+    Serial.println("Distancia actual: "+String(Distance)+" Error: "+String(Distance - distanciaObjetivo));
     if (Distance >= distanciaObjetivo) {
       MoverMotores(0, 0);
       break;
     }
 
     // Obtener error de desviación lateral
-    actualizarValores();
-    float anguloActual = obtenerAnguloZ();;
+    float anguloActual = obtenerAnguloZ();
     float errorA = anguloActual - anguloInicial;
 
     int velocidadIzq = 0;
@@ -303,26 +239,29 @@ void Mover(float distanciaObjetivo, bool reversa) {
     if (abs(errorA) > 0.2) { // Umbral en metros (50 cm)
       //MoverMotores(0, 0);  // Detenerse antes de corregir
       //delay(200);
+      //Serial.println("Error: "+String(errorA));
       if (errorA > 0) {
-        // Se desvió hacia la derecha → girar a la izquierda
+        // Se desvió hacia la Derecha → girar a la Izquierda
         
-        // bajar proporcional a la izquierda
+        // bajar proporcional a la Izquierda
         velocidadIzq = reversa ? (int)(velocidadBase * Proporcional) : (int)(-velocidadBase * Proporcional);
         velocidadDer = reversa ? velocidadBase : -velocidadBase;
+        
       } else if(errorA < 0){
-        // Se desvió hacia la izquierda → girar a la derecha
+        // Se desvió hacia la Izquierda → girar a la Derecha
         
         // bajar proporcional a la Derecha
         velocidadIzq = reversa ? velocidadBase : -velocidadBase;
         velocidadDer = reversa ? (int)(velocidadBase * Proporcional) : (int)(-velocidadBase * Proporcional);
+        
       }
     }else{
       // Avanzar recto
       velocidadIzq = reversa ? velocidadBase : -velocidadBase;
       velocidadDer = reversa ? velocidadBase : -velocidadBase;
     }
-    Serial.println("Derecha:"+ String(velocidadDer));
-    Serial.println("Izquieda:"+ String(velocidadIzq));
+    //Serial.println("Derecha:"+ String(velocidadDer));
+    //Serial.println("Izquieda:"+ String(velocidadIzq));
     
 
     MoverMotores(velocidadDer, velocidadIzq);
@@ -330,22 +269,34 @@ void Mover(float distanciaObjetivo, bool reversa) {
   }
 }
 void Girar(float anguloObjetivo) {
-
+  sendDataBLE("----Angulo Objetivo "+String(anguloObjetivo));
+  Serial.println("----Angulo Objetivo "+String(anguloObjetivo));
   if(anguloObjetivo < 0){     // Si el angulo al que se quiere llegar, es negativo, se gira a la Derecha (-1 a -179)
 
-    GirarSuaveDerechaGrados(anguloObjetivo);
+    GirarDerecha(anguloObjetivo);
 
   }else if(anguloObjetivo>0){ // Si el angulo al que se quiere llegar, es positivo, se gira a la Izquierda (1 a 179)
 
-    GirarSuaveIzquierdaGrados(anguloObjetivo);
+    GirarIzquierda(anguloObjetivo);
     
   }
-}
-void GirarSuaveDerechaGrados(float gradosObjetivo) {
-  int velocidad = 80;
-  float margenError = 1.5;
 
-  actualizarValores();
+}
+
+void GirarDerecha(float gradosObjetivo) {
+  int velocidad = VELOCIDAD_ANGULAR;
+  float margenError = ERROR_ANGULAR;
+
+  if(fabs(gradosObjetivo) >= 90 ){
+    ResetEncoder();
+    Mover(10,false);
+  }
+
+  Actualizar_EnvioDatos();  
+  Resetang();
+  delay(50); 
+
+  Actualizar_EnvioDatos();
   float anguloInicial = obtenerAnguloZ();
   float anguloFinal = anguloInicial + gradosObjetivo;
 
@@ -353,12 +304,25 @@ void GirarSuaveDerechaGrados(float gradosObjetivo) {
   if (anguloFinal > 180) anguloFinal -= 360;
   if (anguloFinal < -180) anguloFinal += 360;
 
-  float error;
-
+  float error = 0;
+  bool doblegiro = false; 
+  float anguloActual = 0;
   do {
-    actualizarValores();
-    float anguloActual = obtenerAnguloZ();
-
+    Actualizar_EnvioDatos();
+    if(fabs(anguloActual) > 90 && !doblegiro){ // Angulos mayores de 90 ajusta la posicion del robot
+      MoverMotores(0, 0);
+      ResetEncoder();
+      delay(20);
+      if(fabs(gradosObjetivo) <= 135){
+        Mover(10,false);
+      }else{
+        Mover(15,false);
+      }
+      delay(20);
+      doblegiro = true;
+    }
+    anguloActual= obtenerAnguloZ();
+    
     // Calcular error y normalizar
     error = anguloFinal - anguloActual;
     while (error > 180) error -= 360;
@@ -369,17 +333,32 @@ void GirarSuaveDerechaGrados(float gradosObjetivo) {
     delay(30);
     MoverMotores(0, 0);
     delay(20);
-
-  } while (fabs(error) > margenError);
-
+    sendDataBLE("Angulo actual: "+String(anguloActual)+" Error: "+String(error));
+    Serial.println("Angulo actual: "+String(anguloActual)+" Error: "+String(error));
+  } while (fabs(error) > margenError);// mientras el error sea mayor
+  if(fabs(gradosObjetivo) <= 90){// Angulos mayores de 90 ajusta la posicion del robot
+    MoverMotores(0, 0);
+    ResetEncoder();
+    Mover(5,false);
+    delay(20);
+  }
   // Detener por seguridad
   MoverMotores(0, 0);
 }
-void GirarSuaveIzquierdaGrados(float gradosObjetivo) {
-  int velocidad = 80;
-  float margenError = 1.5;
+void GirarIzquierda(float gradosObjetivo) {
+  int velocidad = VELOCIDAD_ANGULAR;
+  float margenError = ERROR_ANGULAR;
 
-  actualizarValores();
+  if(fabs(gradosObjetivo) >= 90 ){
+    
+    ResetEncoder();
+    Mover(10,false);
+  }
+  Actualizar_EnvioDatos();  
+  Resetang();
+  delay(50);                // Espera breve para estabilizar
+
+  Actualizar_EnvioDatos();  // Vuelve a actualizar antes de iniciar giro
   float anguloInicial = obtenerAnguloZ();
   float anguloFinal = anguloInicial + gradosObjetivo;
 
@@ -387,11 +366,26 @@ void GirarSuaveIzquierdaGrados(float gradosObjetivo) {
   if (anguloFinal > 180) anguloFinal -= 360;
   if (anguloFinal < -180) anguloFinal += 360;
 
-  float error;
-  do {
-    actualizarValores();
-    float anguloActual = obtenerAnguloZ();
+  float error = 0;
+  bool doblegiro = false; 
+  float anguloActual = 0;
 
+  do {
+    Actualizar_EnvioDatos();
+    if(fabs(anguloActual) > 90 && !doblegiro){ // Angulos mayores de 90 ajusta la posicion del robot
+      MoverMotores(0, 0);
+      ResetEncoder();
+      delay(20);
+      if(fabs(gradosObjetivo) <= 135){
+        Mover(10,false);
+      }else{
+        Mover(15,false);
+      }
+      delay(20);
+      doblegiro = true;
+    }
+    anguloActual = obtenerAnguloZ();
+    
     // Calcular error y normalizar
     error = anguloFinal - anguloActual;
     while (error > 180) error -= 360;
@@ -402,12 +396,20 @@ void GirarSuaveIzquierdaGrados(float gradosObjetivo) {
     delay(30);
     MoverMotores(0, 0);
     delay(20);
-
-  } while (fabs(error) > margenError);
-
+    sendDataBLE("Angulo actual: "+String(anguloActual)+" Error: "+String(error));
+    Serial.println("Angulo actual: "+String(anguloActual)+" Error: "+String(error));
+  } while (fabs(error) > margenError);// mientras el error sea mayor
+  
+  if(fabs(gradosObjetivo) <= 90){
+    MoverMotores(0, 0);
+    ResetEncoder();
+    Mover(5,false);
+    delay(20);
+  }
   // Detener por seguridad
   MoverMotores(0, 0);
 }
+/**/
 void MoverMotores(int velocidadDer, int velocidadIzq) {
   // Motor A (izquierdo)
   digitalWrite(Motor[0], velocidadIzq >= 0);
@@ -418,22 +420,16 @@ void MoverMotores(int velocidadDer, int velocidadIzq) {
   digitalWrite(Motor[2], velocidadDer >= 0);
   digitalWrite(Motor[3], velocidadDer < 0);
   ledcWrite(pwmChannelB, abs(velocidadDer));
+  
+  UpdateEncoderA();       // Encoder
+  UpdateEncoderB();       // Encoder
 }
->>>>>>> Cuartas
-
-/*=======================================
-              Conteo Encoder
-  ========================================*/
-void UpdateEncoderA() {
-  CountEncoderA++;
-  DistanceEncoder++;
+void ResetEncoder() {
+  noInterrupts();
+  CountEncoderA = 0;
+  CountEncoderB = 0;
+  DistanceEncoder = 0;
+  Distance = 0;
+  FormerTime = millis();
+  interrupts();
 }
-
-void UpdateEncoderB() {
-  CountEncoderB++;
-<<<<<<< HEAD
-}
-=======
-}
-
->>>>>>> Cuartas

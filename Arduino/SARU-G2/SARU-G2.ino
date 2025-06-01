@@ -13,17 +13,13 @@
 #include "FastIMU.h"
 #include <Wire.h>
 #include <vector>
-<<<<<<< HEAD
-
   #define IMU_ADDRESS 0x68
-=======
   #define N 10 // Para filtrar
   #define N_CAL 100
   #define UMBRAL_ACEL 10.0   // cm/s²
   #define UMBRAL_VEL 0.0    // cm/s
   #define TIEMPO_QUIETO_MS 200
   #define IMU_ADDRESS 0x69
->>>>>>> Cuartas
   MPU6500 IMU;
 
 //MATRIZ TRANSFORMACIÓN
@@ -37,10 +33,14 @@
   #define QRE_PIN 36 
   std::vector<float> obtenerPosicionXY();
 
+// MOVIMIENTO DE MOTORES
+  #define VELOCIDAD_ANGULAR 80
+  #define VELOCIDAD_LINEAL 80
+  #define ERROR_ANGULAR  1.0
+
 /***************************************************************/
 // Variables Main SARU
 /***************************************************************/
-<<<<<<< HEAD
 
 // Arreglos para almacenar valores
 float Global[3];  // GEX, GEY, GEA
@@ -48,32 +48,39 @@ float Local[3];   // LEX, LEY, LEA
 float PuntoB[2];  // BX, BY
 float PuntoC[2];  // CX, CY
 
-/*
-=======
->>>>>>> Cuartas
+/**/
 bool Enable = false;        // Verifica el estado del robot Saru-G2
 std::vector<float> PocisionActual = {0.0, 0.0};
+int detectada = 0;
 float AnguloActual = 90.0;
 float VelocidadActual = 0.0;
 float Rpms = 0.0;
-<<<<<<< HEAD
-float distanciaAB, anguloAB, angulo BA;
-float distanciaBC, anguloBC, angulo CB, anguloA;
-=======
 float distanciaAB, anguloAB, anguloBA;
 float distanciaBC, anguloBC, anguloCB, anguloA;
->>>>>>> Cuartas
 unsigned char Estado = 0;    // En Punto A = 0
                              // Hacia Punto B = 1
                              // Hacia Punto C = 2
                              // Espera remove planta = 3
                              // Hacia Punto B desde C = 4
                              // Hacia Punto A desde B = 5
-<<<<<<< HEAD
 
-=======
 /**/
->>>>>>> Cuartas
+void Actualizar_EnvioDatos(){
+  actualizarValores();    // MPU6500
+  Rpms = RmpDistance();   // Encoder
+  PocisionActual =  obtenerPosicionXY();// MPU6500
+  VelocidadActual = obtenerVelocidadX();// MPU6500
+  AnguloActual = obtenerAnguloZ();      // MPU6500
+  
+
+  //************************************
+  // 3.2. Envio de datos a matlab
+  //************************************
+  //String mensaje = "PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(AnguloActual, 3)+"|R:"+String(Rpms, 3);
+  
+  //sendDataBLE(mensaje);// Envio de datos del robot 
+}
+/**/
 void setup() {
     Serial.begin(115200);
 
@@ -82,56 +89,41 @@ void setup() {
     configurarSensores();
     configuracionLeds();
     ConfigMotor();
-    ConfigEncoder(0,0.0);
+    ConfigEncoder(350, 6.0);
     configurarMPU6500();
     encenderRojo(); 
     
     // Proceso leds
-    // 1- Inicia con led rojo en espera de los datos de matlab
-    // 2- Parpadea en verde esperando planta
-    // 3- led rojo apagado y verde activo en proceso de A a B y a C
-    // 4- Parpadea rojo hasta retirar la planta 
+    // 1- Inicia con led rojo y verde apagado hasta conexion
+    // 2- Al conectar, Led rojo y verde activos esperando ingreso de datos
+    // 3- Con datos apaga el rojo y parpadea en verde esperando planta
+    // 3- con planta el verde activo en proceso de A a B y a C
+    // 4- Parpadea rojo y apaga verde hasta retirar la planta 
     // 5- led rojo apagado y verde activo en proceso de C a B y a A
-    // 6- Vuelve a led rojo en espera de datos de matlab
+    // 6- Vuelve a led rojo y verde en espera de datos de matlab
     
 }
-
 void loop() {
-    
-<<<<<<< HEAD
-
+    /**/
     if(Enable){// Si el robot esta conextado y activo 
-      // Ya hay datos en los arreglos
-      
+      // Ya hay datos en los arreglos      
+
       //************************************
       // 2. ¿Planta ubicada correctamente?
       //************************************
-      while (!detectarObjetoRedundante()) {
-        int espera = 500;
-        encenderVerde(); //Parpadeo de led verde en espera de planta
-        delay(espera/2);
-        apagarVerde();
-        delay(espera/2);
+      if(detectada == 0){
+        while (!detectarObjetoRedundante()) {
+          int espera = 1000;
+          encenderVerde(); //Parpadeo de led verde en espera de planta
+          delay(espera * 0.5);
+          apagarVerde();
+          delay(espera * 0.5);
+        }
+        detectada = 1;
       }
       encenderVerde();
-      
-      
-      // Envio de datos del robot 
-      actualizarValores();
-      UpdateEncoderA();
-      UpdateEncoderB();
 
-    
-      PocisionActual =  obtenerPosicionXY();
-      VelocidadActual = obtenerVelocidadX();
-      AnguloActual = obtenerAnguloZ();
-      Rpms = RmpDistance();
-
-      //************************************
-      // 3.2. Envio de datos a matlab
-      //************************************
-      sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(AnguloActual, 3)+"|R:"+String(Rpms, 3));
-      actualizarVariablesDesdeBLE();
+      Actualizar_EnvioDatos();
 
       switch (Estado) {
         case 0:
@@ -141,27 +133,44 @@ void loop() {
         //************************************
         // 3.1. Calculo de trayectorias
         //************************************
+          sendDataBLE("---Caso 0---");
+          delay(1000);
           calcularTrayectoria();
           distanciaAB = getDistancia_AB();
-          anguloAB = getAngulo_AB();
+          anguloAB = normalizarAngulo(getAngulo_AB());
           distanciaBC = getDistancia_BC();
-          anguloBC = getAngulo_BC();
+          anguloBC = normalizarAngulo(getAngulo_BC());
+          sendDataBLE("Angulo 1 AB: "+String(anguloAB));
+          delay(1000);
+          sendDataBLE("Distancia 1 AB: "+String(distanciaAB));
+          delay(1000);
+          sendDataBLE("Angulo 2 BC: "+String(anguloBC));
+          delay(1000);
+          sendDataBLE("Distancia 2 BC: "+String(distanciaBC));
+          delay(5000);
           Estado = 1; 
-
           break;
 
         case 1:
           // Hacia Punto B
-          AngularMotor(anguloAB,255);
-          LinealMotor(distanciaAB,115);
+          sendDataBLE("---Caso 1---");
+          delay(1000);
+          Girar(anguloAB);
+          ResetEncoder();
+          Mover(distanciaAB,false);
+          ResetEncoder();
           delay(10000);
           Estado = 2; 
           break;
 
         case 2:
           // Hacia Punto C 
-          AngularMotor(anguloBC,255);
-          LinealMotor(distanciaBC,115);
+          sendDataBLE("---Caso 2---");
+          delay(100);
+          Girar(anguloBC);
+          ResetEncoder();
+          Mover(distanciaBC,false);
+          ResetEncoder();
           Estado = 3; 
           break;
 
@@ -169,6 +178,8 @@ void loop() {
           //************************************
           // 4. Espera remove planta
           //************************************
+          sendDataBLE("---Caso 3---");
+          delay(1000);
           while (detectarObjetoRedundante()) {
             int espera = 500;
             encenderRojo();//Parpadeo de led rojo  en espera de retiro de planta
@@ -176,37 +187,61 @@ void loop() {
             apagarRojo();
             delay(espera/2);
           }
+          delay(1000);
           //************************************
           // 4. Calculo de trayectoria de regreso
           //************************************
           volverA_A();
-          anguloBA = getAngulo_BA();
-          anguloCB = getAngulo_CB();
-          anguloA = getAngulo_A();
+          anguloBA = normalizarAngulo(getAngulo_BA());
+          anguloCB = normalizarAngulo(getAngulo_CB());
+          anguloA = normalizarAngulo(getAngulo_A());
+          delay(1000);
+          sendDataBLE("Angulo 3 BA: "+String(anguloBA));
+          delay(1000);
+          sendDataBLE("Distancia 3 BC: "+String(distanciaBC));
+          delay(1000);
+          sendDataBLE("Angulo 4 CB: "+String(anguloCB));
+          delay(1000);
+          sendDataBLE("Distancia 4 AB: "+String(distanciaAB));
+          delay(1000);
+          sendDataBLE("Angulo 5 A: "+String(anguloA));
+          delay(5000);
 
-          Estado = 4; 
+          //Estado = 4; 
           break;
         
         case 4:
            // Hacia Punto B desde C
-           AngularMotor(anguloCB,255);
-           LinealMotor(distanciaBC,115);
-           Estado = 5; 
+          sendDataBLE("---Caso 4---");
+          delay(1000);
+          Girar(anguloCB);
+          ResetEncoder();
+          Mover(distanciaBC,false);
+          ResetEncoder();
+          Estado = 5; 
           break;
         
         case 5:
           // Hacia Punto A desde B
-          AngularMotor(anguloBA,255);
-          LinealMotor(distanciaAB,115);
+          sendDataBLE("---Caso 5---");
+          delay(1000);
+          Girar(anguloBA);
+          ResetEncoder();
+          Mover(distanciaAB,false);
+          ResetEncoder();
+          Estado = 6; 
           break;
-      }
-
-        caso 6: 
-        // Del angulo en direccion BA a el angulo en posicion inicial
-        AnguloMotor(anguloA,255);
-        Estado = 0; 
-        Enable = false;
+        case 6: 
+          // Del angulo en direccion BA a el angulo en posicion inicial
+          sendDataBLE("---Caso 6---");
+          delay(1000);
+          Girar(anguloA);
+          ResetEncoder();
+          encenderRojo();
+          Estado = 0; 
+          Enable = false;
         break;
+      }
 
     }else{
       // Verificar parámetros de entrada
@@ -218,138 +253,13 @@ void loop() {
         if(parsearDatos(Data)){
           Enable = true;// Activa el robot
           apagarRojo();
-          encenderVerde(); 
-
+        }else{
+          encenderVerde();
+          delay(1000);
         }
       }
     }
-    
-}
-*/
-=======
-  if(Enable){// Si el robot esta conextado y activo 
-    // Ya hay datos en los arreglos
     /**/
-    //************************************
-    // 2. ¿Planta ubicada correctamente?
-    //************************************
-    while (!detectarObjetoRedundante()) {
-      int espera = 500;
-      encenderVerde(); //Parpadeo de led verde en espera de planta
-      delay(espera/2);
-      apagarVerde();
-      delay(espera/2);
-    }
-    encenderVerde();
-    
-    
-    // Envio de datos del robot 
-    actualizarValores();
-    UpdateEncoderA();
-    UpdateEncoderB();
-
-  
-    PocisionActual =  obtenerPosicionXY();
-    VelocidadActual = obtenerVelocidadX();
-    AnguloActual = obtenerAnguloZ();
-    Rpms = RmpDistance();
-
-    //************************************
-    // 3.2. Envio de datos a matlab
-    //************************************
-    sendDataBLE("PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(AnguloActual, 3)+"|R:"+String(Rpms, 3));
-    //actualizarVariablesDesdeBLE();
-    switch (Estado) {
-      case 0:
-        // En Punto A 
-
-        
-      //************************************
-      // 3.1. Calculo de trayectorias
-      //************************************
-        calcularTrayectoria();
-        distanciaAB = getDistancia_AB();
-        anguloAB = normalizarAngulo(getAngulo_AB());
-        distanciaBC = getDistancia_BC();
-        anguloBC = normalizarAngulo(getAngulo_BC());
-        Estado = 1; 
-
-        break;
-
-      case 1:
-        // Hacia Punto B
-
-        Girar(anguloAB);
-        Mover(distanciaAB, false);
-        delay(10000);
-        Estado = 2; 
-        break;
-
-      case 2:
-        // Hacia Punto C 
-        Girar(anguloBC);
-        Mover(distanciaBC, false);
-        Estado = 3; 
-        break;
-
-      case 3:
-        //************************************
-        // 4. Espera remove planta
-        //************************************
-        while (detectarObjetoRedundante()) {
-          int espera = 500;
-          encenderRojo();//Parpadeo de led rojo  en espera de retiro de planta
-          delay(espera/2);
-          apagarRojo();
-          delay(espera/2);
-        }
-        //************************************
-        // 4. Calculo de trayectoria de regreso
-        //************************************
-        volverA_A();
-        anguloBA = normalizarAngulo(getAngulo_BA());
-        anguloCB = normalizarAngulo(getAngulo_CB());
-        anguloA = normalizarAngulo(getAngulo_A());
-
-        Estado = 4; 
-        break;
-      
-      case 4:
-        // Hacia Punto B desde C
-        Girar(anguloCB);
-        Mover(distanciaBC, false);
-          Estado = 5; 
-        break;
-      
-      case 5:
-        // Hacia Punto A desde B
-        Girar(anguloBA);
-        Mover(distanciaAB, false);
-        break;
-
-      case 6: 
-      // Del angulo en direccion BA a el angulo en posicion inicial
-      Mover(anguloA, false);
-      Estado = 0; 
-      Enable = false;
-      break;
-
-    }
-  }else{
-    // Verificar parámetros de entrada
-    String Data = readDataBLE();
-    if(Data!=""){
-      //************************************
-      // 1. Cargar parámetros de entrada
-      //************************************
-      if(parsearDatos(Data)){
-        Enable = true;// Activa el robot
-        apagarRojo();
-        encenderVerde(); 
-
-      }
-    }
-  }
 }
 float normalizarAngulo(float angulo) {
   angulo = fmod(angulo, 360.0f); // Asegura que esté entre 0–360
@@ -362,7 +272,6 @@ float normalizarAngulo(float angulo) {
   return angulo;
 }
 /**/
->>>>>>> Cuartas
 /******************************************************************************/
 //Ejemplo QRE1114
 /******************************************************************************/
@@ -371,7 +280,6 @@ void setup() {
   Serial.begin(115400);
   configurarSensores();
 }
-
 void loop() {
   bool objeto = detectarObjetoRedundante();
   //bool objeto = detectarObjetoPreciso(QRE_PIN);
@@ -383,12 +291,11 @@ void loop() {
 /******************************************************************************/
 //Ejemplo Comunicación
 /******************************************************************************/
-/**/
+/**
 void setup() {
   Serial.begin(115200);
   setupBLE();
 }
-
 void loop() {
   /*String Data = readDataBLE();
   if(Data!=""){
@@ -399,69 +306,46 @@ void loop() {
   else {
     
   }
-  */
-  sendDataBLE("PX:12.345|PY:67.890|V:3.457|A:90.000|R:1500.123");
+  //sendDataBLE("PX:12.345|PY:67.890|V:3.457|A:90.000|R:1500.123");
   //sendDataBLE("Hola desde ESP32");
   delay(1000);
 }
-
-/**/
 /**/
 /******************************************************************************/
 //Ejemplo MPU6500
 /******************************************************************************/
-/**
-
+/**/
 /**/
 //*****************************************************************
 // Ejemplo Motores
 //*****************************************************************
 /**
-<<<<<<< HEAD
-void setup() {
-  Serial.begin(115200);
-
-=======
-char estado = 0;
 void setup() {
   Serial.begin(115200);
 
   configurarMPU6500();
->>>>>>> Cuartas
   ConfigMotor();
-  ConfigEncoder(330, 6.2); // Encoder turncount , diameter
+  ConfigEncoder(350, 6.0); // Encoder turncount , diameter
 }
-
 void loop() {
-<<<<<<< HEAD
 
-  //LinealMotor(50, 115);
-  AngularMotor(90, 255);
-  //RmpDistance();
-  delay(10);
-=======
-  
- 
+  //MoverMotores(-100, -100);
+ /**
   if (Serial.available() > 0) {
     String data = Serial.readStringUntil('\n');  // Lee hasta salto de línea
     if(data!=""){
       
       float number = data.toFloat();               // Convierte a float
       //Mover(number, false);
+      //ResetEncoder();
       Girar(number);
     }
   }
-  
->>>>>>> Cuartas
+  /**
 }
 /**/
-
 //*****************************************************************
-<<<<<<< HEAD
-// Ejemplo Motores
-=======
-// Ejemplo Covecion
->>>>>>> Cuartas
+// Ejemplo Coversion
 //*****************************************************************
 /**
 void setup() {
@@ -481,6 +365,5 @@ void setup() {
   irA_C();
   volverA_A();  //ESTAS SON LAS FUNCIONES QUE SE DEBEN LLAMAR PARA CALCULAR Y VER LOS PUNTOS, para calcular los puntos y devolvere solo es necesario la primera y la ultima funcion
 }
-
 void loop() {}
 /**/

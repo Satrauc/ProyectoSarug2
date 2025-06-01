@@ -6,6 +6,7 @@ float offsetAcelX = 0.0;
 float offsetAcelY = 0.0;
 float offsetGyroZ = 0.0;
 
+
 float velX = 0.0;
 float velY = 0.0;
 float posX = 0.0;
@@ -146,7 +147,12 @@ void actualizarValores() {
   }
 
   // --- Giroscopio Z ---
-  float gyroZ = gyroData.gyroZ - offsetGyroZ;
+  float gyroZ = gyroData.gyroZ;
+  if(gyroZ > 0){
+      gyroZ = gyroData.gyroZ + offsetGyroZ;
+  }else if(gyroZ < 0){
+      gyroZ = gyroData.gyroZ - offsetGyroZ;
+  }
   if (abs(gyroZ) > 0.5) {
     angZ += gyroZ * deltaT;
     giroActivo = true;
@@ -189,6 +195,10 @@ float obtenerVelocidadX() {
 float obtenerAnguloZ() {
   
   return angZ;
+}
+
+void Resetang(){
+  angZ = 0;
 }
 
 //***********************************************

@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-=======
 
-
->>>>>>> Cuartas
 BLECharacteristic* pTxCharacteristic;
 BLECharacteristic* pRxCharacteristic;
 bool deviceConnected = false;
@@ -12,8 +8,8 @@ String rxValue = "";
 /*float Global[3];  // GEX, GEY, GEA
 float Local[3];   // LEX, LEY, LEA
 float PuntoB[2];  // BX, BY
-float PuntoC[2];  // CX, CY*/
-/*
+float PuntoC[2];  // CX, CY
+/**
 void actualizarVariablesDesdeBLE() {
   GEX = Global[0];
   GEY = Global[1];
@@ -110,6 +106,7 @@ void setupBLE() {
 
 void sendDataBLE(const String& msg) {
   if (deviceConnected) {
+    Serial.println(msg);
     pTxCharacteristic->setValue(msg.c_str());
     pTxCharacteristic->notify();
   }
