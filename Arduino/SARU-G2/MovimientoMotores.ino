@@ -211,17 +211,17 @@ void Mover(float distanciaObjetivo, bool reversa) {
   int velocidadBase = VELOCIDAD_LINEAL;
   Distance = 0;  // Reiniciar distancia
   bool completado = false;
-  sendDataBLE("----Distancia Objetivo "+String(distanciaObjetivo));
+  //sendDataBLE("----Distancia Objetivo "+String(distanciaObjetivo));
   Serial.println("----Distancia Objetivo "+String(distanciaObjetivo));
   Actualizar_EnvioDatos();
-  Resetang();
+  //Resetang();
   float anguloInicial = obtenerAnguloZ();
   
   while (!completado) {
     
     Actualizar_EnvioDatos();
     
-    sendDataBLE("Distancia actual: "+String(Distance)+" Error: "+String(Distance - distanciaObjetivo));
+    //sendDataBLE("Distancia actual: "+String(Distance)+" Error: "+String(Distance - distanciaObjetivo));
     Serial.println("Distancia actual: "+String(Distance)+" Error: "+String(Distance - distanciaObjetivo));
     if (Distance >= distanciaObjetivo) {
       MoverMotores(0, 0);
@@ -286,8 +286,12 @@ void Girar(float anguloObjetivo) {
 void GirarDerecha(float gradosObjetivo) {
   int velocidad = VELOCIDAD_ANGULAR;
   float margenError = ERROR_ANGULAR;
+  float modificadorVelocidad = 0.6;
 
-  if(fabs(gradosObjetivo) >= 90 ){
+  if(fabs(gradosObjetivo) <= 45 ){
+    ResetEncoder();
+    Mover(8,false);
+  }else{
     ResetEncoder();
     Mover(10,false);
   }
@@ -316,7 +320,7 @@ void GirarDerecha(float gradosObjetivo) {
       if(fabs(gradosObjetivo) <= 135){
         Mover(10,false);
       }else{
-        Mover(15,false);
+        Mover(17,false);
       }
       delay(20);
       doblegiro = true;
@@ -336,10 +340,10 @@ void GirarDerecha(float gradosObjetivo) {
     sendDataBLE("Angulo actual: "+String(anguloActual)+" Error: "+String(error));
     Serial.println("Angulo actual: "+String(anguloActual)+" Error: "+String(error));
   } while (fabs(error) > margenError);// mientras el error sea mayor
-  if(fabs(gradosObjetivo) <= 90){// Angulos mayores de 90 ajusta la posicion del robot
+  if(fabs(gradosObjetivo) == 90 || fabs(gradosObjetivo) >= 170 ){
     MoverMotores(0, 0);
     ResetEncoder();
-    Mover(5,false);
+    Mover(4,false);
     delay(20);
   }
   // Detener por seguridad
@@ -349,8 +353,10 @@ void GirarIzquierda(float gradosObjetivo) {
   int velocidad = VELOCIDAD_ANGULAR;
   float margenError = ERROR_ANGULAR;
 
-  if(fabs(gradosObjetivo) >= 90 ){
-    
+  if(fabs(gradosObjetivo) <= 45 ){
+    ResetEncoder();
+    Mover(8,false);
+  }else{
     ResetEncoder();
     Mover(10,false);
   }
@@ -379,7 +385,7 @@ void GirarIzquierda(float gradosObjetivo) {
       if(fabs(gradosObjetivo) <= 135){
         Mover(10,false);
       }else{
-        Mover(15,false);
+        Mover(17,false);
       }
       delay(20);
       doblegiro = true;
@@ -400,10 +406,10 @@ void GirarIzquierda(float gradosObjetivo) {
     Serial.println("Angulo actual: "+String(anguloActual)+" Error: "+String(error));
   } while (fabs(error) > margenError);// mientras el error sea mayor
   
-  if(fabs(gradosObjetivo) <= 90){
+  if(fabs(gradosObjetivo) == 90 || fabs(gradosObjetivo) >= 170 ){
     MoverMotores(0, 0);
     ResetEncoder();
-    Mover(5,false);
+    Mover(4,false);
     delay(20);
   }
   // Detener por seguridad
@@ -424,6 +430,7 @@ void MoverMotores(int velocidadDer, int velocidadIzq) {
   UpdateEncoderA();       // Encoder
   UpdateEncoderB();       // Encoder
 }
+/**/
 void ResetEncoder() {
   noInterrupts();
   CountEncoderA = 0;

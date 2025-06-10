@@ -76,9 +76,9 @@ void Actualizar_EnvioDatos(){
   //************************************
   // 3.2. Envio de datos a matlab
   //************************************
-  //String mensaje = "PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(AnguloActual, 3)+"|R:"+String(Rpms, 3);
+  String mensaje = "PX:" + String(PocisionActual[0], 3)+"|PY:" + String(PocisionActual[1], 3)+"|V:" + String(VelocidadActual, 3)+"|A:"+ String(AnguloActual, 3)+"|R:"+String(Rpms, 3);
   
-  //sendDataBLE(mensaje);// Envio de datos del robot 
+  sendDataBLE(mensaje);// Envio de datos del robot 
 }
 /**/
 void setup() {
@@ -127,50 +127,59 @@ void loop() {
 
       switch (Estado) {
         case 0:
-          // En Punto A 
-
-          
+          // En Punto A  
         //************************************
         // 3.1. Calculo de trayectorias
         //************************************
-          sendDataBLE("---Caso 0---");
-          delay(1000);
+          //sendDataBLE("---Caso 0---");
+          //delay(1000);
           calcularTrayectoria();
           distanciaAB = getDistancia_AB();
           anguloAB = normalizarAngulo(getAngulo_AB());
           distanciaBC = getDistancia_BC();
           anguloBC = normalizarAngulo(getAngulo_BC());
-          sendDataBLE("Angulo 1 AB: "+String(anguloAB));
+          /*sendDataBLE("Angulo 1 AB: "+String(anguloAB));
           delay(1000);
           sendDataBLE("Distancia 1 AB: "+String(distanciaAB));
           delay(1000);
           sendDataBLE("Angulo 2 BC: "+String(anguloBC));
           delay(1000);
           sendDataBLE("Distancia 2 BC: "+String(distanciaBC));
-          delay(5000);
+          delay(5000);*/
           Estado = 1; 
           break;
 
         case 1:
           // Hacia Punto B
-          sendDataBLE("---Caso 1---");
-          delay(1000);
+          //sendDataBLE("---Caso 1---");
+          //delay(1000);
+          //sendDataBLE("Giro");
+          //delay(1000);
           Girar(anguloAB);
           ResetEncoder();
+          //delay(5000);
+          //sendDataBLE("Avanzar");
+          //delay(1000);
           Mover(distanciaAB,false);
           ResetEncoder();
-          delay(10000);
+          delay(10000);//10000
           Estado = 2; 
           break;
 
         case 2:
           // Hacia Punto C 
-          sendDataBLE("---Caso 2---");
-          delay(100);
+          /*sendDataBLE("---Caso 2---");
+          delay(1000);
+          sendDataBLE("Giro");
+          delay(1000);*/
           Girar(anguloBC);
           ResetEncoder();
+          //delay(5000);
+          //sendDataBLE("Avanzar");
+          //delay(1000);
           Mover(distanciaBC,false);
           ResetEncoder();
+          //delay(5000);
           Estado = 3; 
           break;
 
@@ -178,8 +187,8 @@ void loop() {
           //************************************
           // 4. Espera remove planta
           //************************************
-          sendDataBLE("---Caso 3---");
-          delay(1000);
+          //sendDataBLE("---Caso 3---");
+          //delay(1000);
           while (detectarObjetoRedundante()) {
             int espera = 500;
             encenderRojo();//Parpadeo de led rojo  en espera de retiro de planta
@@ -195,7 +204,7 @@ void loop() {
           anguloBA = normalizarAngulo(getAngulo_BA());
           anguloCB = normalizarAngulo(getAngulo_CB());
           anguloA = normalizarAngulo(getAngulo_A());
-          delay(1000);
+          /*delay(1000);
           sendDataBLE("Angulo 3 BA: "+String(anguloBA));
           delay(1000);
           sendDataBLE("Distancia 3 BC: "+String(distanciaBC));
@@ -205,39 +214,54 @@ void loop() {
           sendDataBLE("Distancia 4 AB: "+String(distanciaAB));
           delay(1000);
           sendDataBLE("Angulo 5 A: "+String(anguloA));
-          delay(5000);
+          delay(1000);*/
 
-          //Estado = 4; 
+          Estado = 4; 
           break;
         
         case 4:
            // Hacia Punto B desde C
-          sendDataBLE("---Caso 4---");
-          delay(1000);
+          //sendDataBLE("---Caso 4---");
+          //delay(1000);
+          //sendDataBLE("Giro");
+          //delay(1000);
           Girar(anguloCB);
           ResetEncoder();
+          //delay(1000);
+          //sendDataBLE("Avanzar");
+          //delay(1000);
           Mover(distanciaBC,false);
           ResetEncoder();
+          //delay(5000);
           Estado = 5; 
           break;
         
         case 5:
           // Hacia Punto A desde B
-          sendDataBLE("---Caso 5---");
-          delay(1000);
+          //sendDataBLE("---Caso 5---");
+          //delay(1000);
+          //sendDataBLE("Giro");
+          //delay(1000);
           Girar(anguloBA);
           ResetEncoder();
+          //delay(1000);
+          //sendDataBLE("Avanzar");
+          //delay(1000);
           Mover(distanciaAB,false);
           ResetEncoder();
+          //delay(5000);
           Estado = 6; 
           break;
         case 6: 
           // Del angulo en direccion BA a el angulo en posicion inicial
-          sendDataBLE("---Caso 6---");
+          /*sendDataBLE("---Caso 6---");
           delay(1000);
+          sendDataBLE("Giro");
+          delay(1000);*/
           Girar(anguloA);
           ResetEncoder();
           encenderRojo();
+          apagarVerde();
           Estado = 0; 
           Enable = false;
         break;
